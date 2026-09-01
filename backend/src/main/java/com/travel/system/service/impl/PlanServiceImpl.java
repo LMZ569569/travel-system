@@ -387,38 +387,18 @@ public class PlanServiceImpl implements PlanService {
             int m = currentMin % 60;
             slot.setStartTime(String.format("%02d:%02d", h, m));
             currentMin += slot.getDuration();
+            int prevMin = currentMin - slot.getDuration();
             if (currentMin > DAY_END_MIN) {
                 // 超出当日可安排时间，截断剩余景点
                 slot.setStartTime(null);
                 continue;
             }
-            // 如果当前时间跨过午餐时间(12:00-13:00)，插入午餐
-            int prevMin = currentMin - slot.getDuration();
+            // 如果当前时间跨过午餐时间(12:00-13:00)，增加60分钟
             if (prevMin < LUNCH_MIN + 60 && currentMin > LUNCH_MIN) {
-                PlanResult.TimeSlot lunch = new PlanResult.TimeSlot();
-                lunch.setType("meal");
-                lunch.setName("午餐");
-                lunch.setStartTime(String.format("%02d:%02d", LUNCH_MIN / 60, LUNCH_MIN % 60));
-                lunch.setDuration(60);
-                lunch.setCost(BigDecimal.valueOf(50));
-                int idx = slots.indexOf(slot);
-                if (idx >= 0) {
-                    slots.add(idx, lunch);
-                }
                 currentMin += 60;
             }
-            // 如果当前时间跨过晚餐时间(18:00-19:00)，插入晚餐
+            // 如果当前时间跨过晚餐时间(18:00-19:00)，增加60分钟
             if (prevMin < DINNER_MIN + 60 && currentMin > DINNER_MIN) {
-                PlanResult.TimeSlot dinner = new PlanResult.TimeSlot();
-                dinner.setType("meal");
-                dinner.setName("晚餐");
-                dinner.setStartTime(String.format("%02d:%02d", DINNER_MIN / 60, DINNER_MIN % 60));
-                dinner.setDuration(60);
-                dinner.setCost(BigDecimal.valueOf(80));
-                int idx = slots.indexOf(slot);
-                if (idx >= 0) {
-                    slots.add(idx, dinner);
-                }
                 currentMin += 60;
             }
         }
