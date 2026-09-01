@@ -1,0 +1,22 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 数据库连接地址，travel_plan 是数据库名
+    url: jdbc:mysql://localhost:3306/travel_plan?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
+    username: root
+    # 改成你自己的 MySQL 密码！
+    password: 20060204
+
+mybatis:
+  configuration:
+    # 数据库下划线字段自动转成 Java 驼峰命名
+    map-underscore-to-camel-case: true
+
+# 高德地图 API（可选）
+# 填了 key 后，规划时会用高德实时计算酒店到景点的出行时间；
+# 不填则按直线距离估算，功能照常可用。
+gaode:
+  key: "054a353f4d54a0ac8783c6c319ccc5e0"
