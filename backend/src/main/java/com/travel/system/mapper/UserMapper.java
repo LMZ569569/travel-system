@@ -3,6 +3,7 @@ package com.travel.system.mapper;
 import com.travel.system.entity.User;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
@@ -16,7 +17,8 @@ public interface UserMapper {
     @Select("SELECT * FROM user WHERE username = #{username}")
     User findByUsername(@Param("username") String username);
 
-    /** 新增用户 */
+    /** 新增用户，自动返回自增 ID */
     @Insert("INSERT INTO user (username, password, nickname) VALUES (#{username}, #{password}, #{nickname})")
+    @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(User user);
 }
