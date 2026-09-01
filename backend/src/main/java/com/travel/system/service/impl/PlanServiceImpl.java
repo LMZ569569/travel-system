@@ -346,7 +346,9 @@ public class PlanServiceImpl implements PlanService {
 
     private PlanResult.DayPlan finishDay(LocalDate date, List<PlanResult.TimeSlot> slots, BigDecimal hotelCost) {
         int currentMin = DAY_START_MIN;
-        for (PlanResult.TimeSlot slot : slots) {
+        // 使用副本遍历，避免在遍历时修改原始列表导致 ConcurrentModificationException
+        List<PlanResult.TimeSlot> working = new ArrayList<>(slots);
+        for (PlanResult.TimeSlot slot : working) {
             int h = currentMin / 60;
             int m = currentMin % 60;
             slot.setStartTime(String.format("%02d:%02d", h, m));
@@ -358,7 +360,10 @@ public class PlanServiceImpl implements PlanService {
                 lunch.setStartTime(String.format("%02d:%02d", LUNCH_MIN / 60, LUNCH_MIN % 60));
                 lunch.setDuration(60);
                 lunch.setCost(BigDecimal.valueOf(50));
-                slots.add(slots.indexOf(slot), lunch);
+                int idx = slots.indexOf(slot);
+                if (idx >= 0) {
+                    slots.add(idx, lunch);
+                }
                 currentMin += 60;
             }
             if (currentMin >= DINNER_MIN && currentMin < DINNER_MIN + 60) {
@@ -368,7 +373,10 @@ public class PlanServiceImpl implements PlanService {
                 dinner.setStartTime(String.format("%02d:%02d", DINNER_MIN / 60, DINNER_MIN % 60));
                 dinner.setDuration(60);
                 dinner.setCost(BigDecimal.valueOf(80));
-                slots.add(slots.indexOf(slot), dinner);
+                int idx = slots.indexOf(slot);
+                if (idx >= 0) {
+                    slots.add(idx, dinner);
+                }
                 currentMin += 60;
             }
         }

@@ -1722,6 +1722,44 @@ body {
                 row.remove();
                 updateNextButton();
             });
+
+            // 日期校验：出发日期 ≤ 到达日期 ≤ 离开日期
+            var arriveInput = row.querySelector('.city-arrive-date');
+            var leaveInput = row.querySelector('.city-leave-date');
+
+            function validateDates() {
+                var startDate = document.getElementById('start-date').value;
+                var arrive = arriveInput.value;
+                var leave = leaveInput.value;
+                if (startDate && arrive && arrive < startDate) {
+                    arriveInput.value = '';
+                    alert('到达日期不能早于出发日期（' + startDate + '）');
+                    return;
+                }
+                if (arrive && leave && leave < arrive) {
+                    leaveInput.value = '';
+                    alert('离开日期不能早于到达日期');
+                    return;
+                }
+            }
+
+            arriveInput.addEventListener('change', function () {
+                validateDates();
+                updateNextButton();
+            });
+
+            leaveInput.addEventListener('change', function () {
+                validateDates();
+                // 自动填充下一个城市的到达日期
+                var nextRow = row.nextElementSibling;
+                if (nextRow && nextRow.classList.contains('city-row')) {
+                    var nextArrive = nextRow.querySelector('.city-arrive-date');
+                    if (nextArrive && !nextArrive.value) {
+                        nextArrive.value = leaveInput.value;
+                    }
+                }
+                updateNextButton();
+            });
         }
 
         // ===== 交通步骤 =====
@@ -1767,26 +1805,23 @@ body {
                             '<div class="table-wrap" id="transport-table-' + i + '">' +
                                 '<div class="loading" style="padding:24px 0;">点击上方选项卡查询交通信息</div>' +
                             '</div>' +
-                            '<div class="self-drive-section" style="margin-top:12px;">' +
-                                '<p>以上没有合适的？试试手动填写</p>' +
-                                '<button class="btn btn-outline btn-sm" onclick="showManualTransportForm(' + i + ')">手动填写</button>' +
+                            '<div class="self-drive-section" style="margin-top:8px;padding:0;">' +
+                                '<button class="btn btn-outline btn-sm" onclick="showManualTransportForm(' + i + ')" style="margin-right:8px;">手动填写</button>' +
+                                '<button class="btn btn-outline btn-sm" onclick="chooseSelfDrive(' + i + ')">自驾</button>' +
                             '</div>' +
-                            '<div id="manual-transport-form-' + i + '" style="display:none;margin-top:12px;padding:16px;border:1px solid var(--border);border-radius:8px;background:#fafbfc;">' +
-                                '<div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:12px;">手动填写交通信息</div>' +
-                                '<div class="form-row" style="gap:12px;margin-bottom:12px;">' +
-                                    '<div class="form-group"><label>车次号/航班号</label><input type="text" id="manual-no-' + i + '" placeholder="如 G1234 / CA1234" style="width:160px;"></div>' +
-                                    '<div class="form-group"><label>出发时间</label><input type="time" id="manual-depart-' + i + '" style="width:130px;"></div>' +
-                                    '<div class="form-group"><label>到达时间</label><input type="time" id="manual-arrive-' + i + '" style="width:130px;"></div>' +
-                                    '<div class="form-group"><label>票价</label><input type="number" id="manual-price-' + i + '" min="0" placeholder="0" style="width:120px;"></div>' +
+                            '<div id="manual-transport-form-' + i + '" style="display:none;margin-top:8px;padding:10px 12px;border:1px solid var(--border);border-radius:6px;background:#fafbfc;">' +
+                                '<div class="form-row" style="gap:8px;margin-bottom:0;">' +
+                                    '<div class="form-group"><label style="font-size:11px;">车次/航班</label><input type="text" id="manual-no-' + i + '" placeholder="如 G1234" style="width:120px;height:30px;font-size:12px;"></div>' +
+                                    '<div class="form-group"><label style="font-size:11px;">出发</label><input type="time" id="manual-depart-' + i + '" style="width:110px;height:30px;font-size:12px;"></div>' +
+                                    '<div class="form-group"><label style="font-size:11px;">到达</label><input type="time" id="manual-arrive-' + i + '" style="width:110px;height:30px;font-size:12px;"></div>' +
+                                    '<div class="form-group"><label style="font-size:11px;">票价</label><input type="number" id="manual-price-' + i + '" min="0" placeholder="0" style="width:90px;height:30px;font-size:12px;"></div>' +
+                                    '<div class="form-group" style="align-self:flex-end;">' +
+                                        '<button class="btn btn-sm" onclick="confirmManualTransport(' + i + ')" style="height:30px;font-size:12px;padding:0 12px;">确认</button>' +
+                                        '<button class="btn btn-sm btn-ghost" onclick="hideManualTransportForm(' + i + ')" style="height:30px;font-size:12px;padding:0 12px;margin-left:4px;">取消</button>' +
+                                    '</div>' +
                                 '</div>' +
-                                '<button class="btn btn-sm" onclick="confirmManualTransport(' + i + ')">确认</button>' +
-                                '<button class="btn btn-sm btn-ghost" style="margin-left:8px;" onclick="hideManualTransportForm(' + i + ')">取消</button>' +
                             '</div>' +
-                            '<div class="self-drive-section">' +
-                                '<p>或者选择自驾出行</p>' +
-                                '<button class="btn btn-outline" onclick="chooseSelfDrive(' + i + ')">选择自驾</button>' +
-                            '</div>' +
-                            '<div id="transport-selected-' + i + '" style="margin-top:12px;display:none;"></div>' +
+                            '<div id="transport-selected-' + i + '" style="margin-top:8px;display:none;"></div>' +
                         '</div>' +
                         '<div class="step-nav">' +
                             '<button class="btn btn-ghost" onclick="goPrev()">上一步</button>' +
