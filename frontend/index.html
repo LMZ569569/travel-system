@@ -441,6 +441,49 @@ body {
     font-size: 13px;
     margin-bottom: 16px;
 }
+
+/* 景点详情弹窗 */
+.spot-detail-content { width: 560px; max-width: 92vw; background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.45); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #e5e7eb; }
+.modal-header h3 { margin: 0; font-size: 16px; }
+.modal-close { font-size: 24px; cursor: pointer; color: #999; line-height: 1; }
+.modal-close:hover { color: #333; }
+.modal-body { padding: 20px; }
+.spot-detail-image { width: 100%; height: 200px; border-radius: 8px; overflow: hidden; margin-bottom: 16px; background: linear-gradient(135deg, #667eea, #764ba2); }
+.spot-image-placeholder { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; font-size: 14px; gap: 8px; }
+.spot-image-placeholder span:first-child { font-size: 48px; }
+.spot-detail-info { margin-bottom: 16px; }
+.spot-detail-tags { display: flex; gap: 8px; margin-bottom: 8px; }
+.spot-detail-tags .level-badge { background: #f59e0b; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.spot-detail-tags .city-tag { background: #e5e7eb; color: #374151; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.spot-detail-meta { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: #6b7280; margin-bottom: 10px; }
+.spot-detail-desc { font-size: 14px; color: #374151; line-height: 1.6; margin-bottom: 8px; }
+.spot-detail-address { font-size: 12px; color: #9ca3af; }
+.spot-detail-rate-section { display: flex; align-items: center; gap: 8px; padding: 12px 0; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; margin-bottom: 16px; }
+.rate-label { font-size: 13px; color: #374151; white-space: nowrap; }
+.star-rating { display: inline-flex; gap: 2px; }
+.star-rating .star { font-size: 22px; cursor: pointer; color: #d1d5db; transition: color .15s; }
+.star-rating .star.active, .star-rating .star:hover { color: #f59e0b; }
+.rate-text { font-size: 12px; color: #9ca3af; margin-left: 4px; }
+.spot-detail-comments h4 { margin: 0 0 12px; font-size: 15px; }
+.comment-input-area { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.comment-input-area textarea { width: 100%; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; resize: vertical; background: #fff; color: #374151; box-sizing: border-box; }
+.comment-input-area textarea:focus { outline: none; border-color: #3b82f6; }
+.comment-list { max-height: 300px; overflow-y: auto; }
+.comment-item { padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
+.comment-item:last-child { border-bottom: none; }
+.comment-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.comment-user { font-weight: 600; font-size: 13px; color: #374151; }
+.comment-stars { font-size: 13px; color: #f59e0b; }
+.comment-time { font-size: 11px; color: #9ca3af; }
+.comment-content { font-size: 13px; color: #6b7280; line-height: 1.5; }
+.comment-loading { text-align: center; color: #9ca3af; font-size: 13px; padding: 20px 0; }
+.comment-empty { text-align: center; color: #9ca3af; font-size: 13px; padding: 20px 0; }
+.spot-clickable { cursor: pointer; transition: color .15s; }
+.spot-clickable:hover { color: #2563eb; text-decoration: underline; }
+.btn-primary { background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; padding: 8px 20px; }
+.btn-primary:hover { background: #1d4ed8; }
 </style>
 <style data-trae-edit-ui="true" id="trae-previewer-tools-styles">:root {
   --trae-layer-image-download: 89990;
@@ -1411,6 +1454,7 @@ body { font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", -apple
 
         var allSpots = [];          // 所有景点
         var currentUser = null;
+        var currentSpotId = null;   // 当前查看的景点ID
 
         // 读取登录状态
         try {
@@ -1471,7 +1515,7 @@ body { font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", -apple
                     '<div class="spot-card">' +
                         '<div class="spot-body">' +
                             '<div class="spot-top">' +
-                                '<span class="spot-name">' + s.name + '</span>' +
+                                '<span class="spot-name spot-clickable" onclick="openSpotDetail(' + s.id + ')">' + s.name + '</span>' +
                                 '<span class="level-badge">' + s.level + '</span>' +
                             '</div>' +
                             '<div class="spot-meta">' + s.province + ' · ' + s.city + openTime + '</div>' +
@@ -1578,9 +1622,203 @@ body { font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", -apple
         // 页面初始化
         renderNav();
         fetchSpots();
+
+        // ===== 景点详情弹窗 =====
+        function openSpotDetail(spotId) {
+            currentSpotId = spotId;
+            var modal = document.getElementById('spot-detail-modal');
+            if (!modal) { alert('弹窗未加载'); return; }
+            modal.style.display = 'flex';
+            document.getElementById('spot-detail-title').textContent = '加载中...';
+            document.getElementById('spot-image-name').textContent = '';
+            document.getElementById('comment-list').innerHTML = '<div class="comment-loading">加载中...</div>';
+            document.getElementById('comment-input').value = '';
+            document.querySelectorAll('.star-rating .star').forEach(function (s) {
+                s.textContent = '☆';
+                s.classList.remove('active');
+            });
+            document.getElementById('rate-text').textContent = '点击星星评分';
+
+            fetch('http://localhost:8080/api/scenic-spot/' + spotId)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.code === 200) {
+                    var spot = data.data;
+                    document.getElementById('spot-detail-title').textContent = spot.name || '景点详情';
+                    document.getElementById('spot-image-name').textContent = spot.name || '';
+                    document.getElementById('spot-detail-level').textContent = spot.level || '';
+                    document.getElementById('spot-detail-level').style.display = spot.level ? 'inline' : 'none';
+                    document.getElementById('spot-detail-city').textContent = spot.city || '';
+                    document.getElementById('spot-detail-rating').textContent = spot.rating || '0.0';
+                    document.getElementById('spot-detail-price').textContent = (spot.price == 0) ? '免费' : '¥' + spot.price;
+                    document.getElementById('spot-detail-duration').textContent = '游玩约 ' + (spot.visitDuration || '2') + ' 小时';
+                    document.getElementById('spot-detail-open').textContent = '开放时间：' + (spot.openTime || '—');
+                    document.getElementById('spot-detail-desc').textContent = spot.description || '暂无详细介绍';
+                    document.getElementById('spot-detail-address').textContent = '📍 ' + (spot.address || spot.city || '');
+                } else {
+                    document.getElementById('spot-detail-title').textContent = '加载失败';
+                }
+            })
+            .catch(function () {
+                document.getElementById('spot-detail-title').textContent = '加载失败';
+            });
+
+            loadComments(spotId);
+        }
+
+        function closeSpotDetail(e) {
+            if (e && e.target !== e.currentTarget) return;
+            document.getElementById('spot-detail-modal').style.display = 'none';
+            currentSpotId = null;
+        }
+
+        function loadComments(spotId) {
+            fetch('http://localhost:8080/api/scenic-spot/' + spotId + '/comments')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var list = document.getElementById('comment-list');
+                if (data.code === 200 && data.data && data.data.length > 0) {
+                    var html = '';
+                    for (var i = 0; i < data.data.length; i++) {
+                        var c = data.data[i];
+                        var stars = '';
+                        for (var si = 0; si < 5; si++) {
+                            stars += (si < Math.round(c.rating || 0)) ? '★' : '☆';
+                        }
+                        var time = c.createdAt ? c.createdAt.substring(0, 10) : '';
+                        html +=
+                            '<div class="comment-item">' +
+                                '<div class="comment-header">' +
+                                    '<span class="comment-user">' + esc(c.username || '匿名用户') + '</span>' +
+                                    '<span class="comment-stars">' + stars + '</span>' +
+                                '</div>' +
+                                '<div class="comment-content">' + esc(c.content || '') + '</div>' +
+                                '<div class="comment-time">' + time + '</div>' +
+                            '</div>';
+                    }
+                    list.innerHTML = html;
+                } else {
+                    list.innerHTML = '<div class="comment-empty">暂无评论，来发表第一条评论吧</div>';
+                }
+            })
+            .catch(function () {
+                document.getElementById('comment-list').innerHTML = '<div class="comment-loading">评论加载失败</div>';
+            });
+        }
+
+        function rateSpot(val) {
+            document.querySelectorAll('.star-rating .star').forEach(function (s) {
+                var v = parseInt(s.getAttribute('data-val'));
+                if (v <= val) {
+                    s.textContent = '★';
+                    s.classList.add('active');
+                } else {
+                    s.textContent = '☆';
+                    s.classList.remove('active');
+                }
+            });
+            var texts = ['', '很差', '一般', '还行', '推荐', '超赞'];
+            document.getElementById('rate-text').textContent = texts[val] || '已评分';
+
+            if (currentSpotId) {
+                var username = '游客' + Math.floor(Math.random() * 1000);
+                fetch('http://localhost:8080/api/scenic-spot/' + currentSpotId + '/comment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username, content: '用户评分：' + val + '星', rating: val, spotId: currentSpotId })
+                }).then(function () {
+                    loadComments(currentSpotId);
+                });
+            }
+        }
+
+        function submitComment() {
+            var input = document.getElementById('comment-input');
+            var content = input.value.trim();
+            if (!content) { alert('请输入评论内容'); return; }
+            if (!currentSpotId) return;
+
+            var username = '游客' + Math.floor(Math.random() * 1000);
+            fetch('http://localhost:8080/api/scenic-spot/' + currentSpotId + '/comment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: username, content: content, rating: 0, spotId: currentSpotId })
+            }).then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.code === 200) {
+                    input.value = '';
+                    loadComments(currentSpotId);
+                } else {
+                    alert('评论发表失败');
+                }
+            })
+            .catch(function () {
+                alert('评论发表失败，请确认后端已启动');
+            });
+        }
+
+        function esc(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
     </script>
 
 
 <div data-trae-edit-ui="true" class="trae-image-download-btn" title="Download image" style="position: fixed; display: none; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; background: var(--trae-bg-menu, #222427); border: 1px solid var(--trae-border-l2, rgba(255,255,255,0.12)); box-shadow: var(--trae-floating-shadow, 0px 2px 8px 0px rgba(0,0,0,0.2)); color: var(--trae-icon-default, #f5f9fe); cursor: pointer; z-index: 89990; transition: background 0.15s; pointer-events: auto;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M8 2v8m0 0L5 7m3 3l3-3M3 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-    </svg></div></body></html>
+    </svg></div>
+
+<!-- 景点详情弹窗 -->
+    <div id="spot-detail-modal" class="modal-overlay" style="display:none;" onclick="closeSpotDetail(event)">
+        <div class="modal-content spot-detail-content" onclick="event.stopPropagation();">
+            <div class="modal-header">
+                <h3 id="spot-detail-title">景点详情</h3>
+                <span class="modal-close" onclick="closeSpotDetail()">&times;</span>
+            </div>
+            <div class="modal-body" style="max-height:70vh;overflow-y:auto;">
+                <div id="spot-detail-image" class="spot-detail-image">
+                    <div class="spot-image-placeholder">
+                        <span>🏞️</span>
+                        <span id="spot-image-name"></span>
+                    </div>
+                </div>
+                <div class="spot-detail-info">
+                    <div class="spot-detail-tags">
+                        <span class="level-badge" id="spot-detail-level"></span>
+                        <span class="city-tag" id="spot-detail-city"></span>
+                    </div>
+                    <div class="spot-detail-meta">
+                        <span>⭐ <b id="spot-detail-rating">0.0</b></span>
+                        <span id="spot-detail-price">免费</span>
+                        <span id="spot-detail-duration">游玩约 2 小时</span>
+                        <span id="spot-detail-open">开放时间：—</span>
+                    </div>
+                    <div class="spot-detail-desc" id="spot-detail-desc"></div>
+                    <div class="spot-detail-address" id="spot-detail-address"></div>
+                </div>
+                <div class="spot-detail-rate-section">
+                    <span class="rate-label">我的评分：</span>
+                    <div class="star-rating" id="star-rating">
+                        <span class="star" data-val="1" onclick="rateSpot(1)">☆</span>
+                        <span class="star" data-val="2" onclick="rateSpot(2)">☆</span>
+                        <span class="star" data-val="3" onclick="rateSpot(3)">☆</span>
+                        <span class="star" data-val="4" onclick="rateSpot(4)">☆</span>
+                        <span class="star" data-val="5" onclick="rateSpot(5)">☆</span>
+                    </div>
+                    <span class="rate-text" id="rate-text">点击星星评分</span>
+                </div>
+                <div class="spot-detail-comments">
+                    <h4>用户评论</h4>
+                    <div class="comment-input-area">
+                        <textarea id="comment-input" placeholder="写下你的评论..." rows="2"></textarea>
+                        <button class="btn btn-primary" onclick="submitComment()" style="padding:6px 16px;font-size:13px;align-self:flex-end;">发表评论</button>
+                    </div>
+                    <div class="comment-list" id="comment-list">
+                        <div class="comment-loading">加载中...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body></html>
