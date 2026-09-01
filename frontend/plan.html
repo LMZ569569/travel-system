@@ -1254,26 +1254,8 @@ body {
         window.chooseTransport = function (index) {
             var t = transportQueryData[index];
             if (!t) return;
-            var url, body;
-            if (t.type === 'flight') {
-                url = '/api/flight';
-                body = { flightNo: t.scheduleNo, airline: t.sub, fromCity: t.fromCity, toCity: t.toCity, departTime: t.departTime, arriveTime: t.arriveTime, price: t.price };
-            } else {
-                url = '/api/train';
-                body = { trainNo: t.scheduleNo, trainType: t.sub, fromCity: t.fromCity, toCity: t.toCity, departTime: t.departTime, arriveTime: t.arriveTime, price: t.price };
-            }
-            api(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            }).then(function (data) {
-                if (data.code === 200) {
-                    document.getElementById('transport-modal').style.display = 'none';
-                    alert('已选择：' + t.scheduleNo + ' ' + t.fromCity + '→' + t.toCity);
-                } else {
-                    alert(data.message || '添加失败');
-                }
-            });
+            document.getElementById('transport-modal').style.display = 'none';
+            alert('已选择：' + t.scheduleNo + ' ' + t.fromCity + '→' + t.toCity);
         };
 
         function queryTransportByNo() {
