@@ -2481,18 +2481,7 @@ body {
             }
             html += '</div>';
 
-            // 总价
-            var grandTotal = totalTransport + totalHotel;
-            html += '<div class="confirm-total">' +
-                '<span>行程总费用</span>' +
-                '<span class="total-price">¥' + grandTotal + '</span>' +
-                '</div>';
-
-            // 附加说明
-            html += '<div class="hint" style="margin-top:16px;margin-bottom:0;">' +
-                '交通费合计：¥' + totalTransport + ' | 住宿费合计：¥' + totalHotel +
-                ' | 最终行程可能包含更多细节安排（景点、用餐等），费用将在生成后展示。' +
-                '</div>';
+            // 总价已在生成后展示，此处不重复计算
 
             container.innerHTML = html;
         }

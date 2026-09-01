@@ -76,21 +76,26 @@ public class PlanServiceImpl implements PlanService {
         List<TransportInfo> cityTransports = new ArrayList<>();
         List<TransportInfo> allSegments = new ArrayList<>();
         if (request.getTransportSegments() != null && !request.getTransportSegments().isEmpty()) {
+            // 先构建所有交通段（只一次，避免重复）
+            for (PlanRequest.TransportSegment seg : request.getTransportSegments()) {
+                TransportInfo ti = new TransportInfo();
+                ti.setType(seg.getType());
+                ti.setScheduleNo(seg.getScheduleNo());
+                ti.setFromCity(seg.getFromCity());
+                ti.setToCity(seg.getToCity());
+                ti.setDepartTime(seg.getDepartTime());
+                ti.setArriveTime(seg.getArriveTime());
+                ti.setPrice(seg.getPrice());
+                allSegments.add(ti);
+            }
+            // 再为每个城市匹配对应的交通段
             for (int i = 0; i < cities.size(); i++) {
                 String city = cities.get(i).getCity();
                 TransportInfo matched = null;
-                for (PlanRequest.TransportSegment seg : request.getTransportSegments()) {
-                    TransportInfo ti = new TransportInfo();
-                    ti.setType(seg.getType());
-                    ti.setScheduleNo(seg.getScheduleNo());
-                    ti.setFromCity(seg.getFromCity());
-                    ti.setToCity(seg.getToCity());
-                    ti.setDepartTime(seg.getDepartTime());
-                    ti.setArriveTime(seg.getArriveTime());
-                    ti.setPrice(seg.getPrice());
-                    allSegments.add(ti);
-                    if (seg.getToCity() != null && seg.getToCity().equals(city)) {
+                for (TransportInfo ti : allSegments) {
+                    if (ti.getToCity() != null && ti.getToCity().equals(city)) {
                         matched = ti;
+                        break;
                     }
                 }
                 cityTransports.add(matched);
@@ -207,6 +212,32 @@ public class PlanServiceImpl implements PlanService {
     private List<Integer> assignCityDays(List<PlanRequest.CityPlan> cities,
                                          List<List<ScenicSpot>> allCitySpots,
                                          int totalDays) {
+        // 先检查是否有用户指定的天数，有则优先使用
+        boolean hasUserDays = false;
+        for (PlanRequest.CityPlan cp : cities) {
+            if (cp.getDays() != null && cp.getDays() > 0) {
+                hasUserDays = true;
+                break;
+            }
+        }
+        if (hasUserDays) {
+            int specifiedSum = 0;
+            List<Integer> out = new ArrayList<>();
+            for (PlanRequest.CityPlan cp : cities) {
+                int d = cp.getDays() != null && cp.getDays() > 0 ? cp.getDays() : 1;
+                out.add(d);
+                specifiedSum += d;
+            }
+            // 如果指定的天数总和大于总天数，按比例缩减
+            if (specifiedSum > totalDays) {
+                for (int i = 0; i < out.size(); i++) {
+                    int adjusted = Math.max(1, out.get(i) * totalDays / specifiedSum);
+                    out.set(i, adjusted);
+                }
+            }
+            return out;
+        }
+
         int totalSpots = 0;
         for (List<ScenicSpot> spots : allCitySpots) {
             totalSpots += spots.size();
@@ -214,33 +245,29 @@ public class PlanServiceImpl implements PlanService {
         if (totalSpots == 0) {
             List<Integer> out = new ArrayList<>();
             for (int i = 0; i < cities.size(); i++) {
-                out.add(cities.get(i).getDays() != null && cities.get(i).getDays() > 0 ? cities.get(i).getDays() : 1);
+                out.add(1);
             }
             return out;
         }
+        // 按景点数比例分配天数
         List<Integer> out = new ArrayList<>();
         int remaining = totalDays;
         for (int i = 0; i < cities.size(); i++) {
-            if (i == cities.size() - 1) {
-                out.add(remaining);
-                continue;
-            }
             int spots = allCitySpots.get(i).size();
-            int days = (int) Math.ceil((double) spots / 3);
-            int max = cities.get(i).getDays() != null && cities.get(i).getDays() > 0 ? cities.get(i).getDays() : Integer.MAX_VALUE;
-            days = Math.min(days, max);
-            days = Math.min(days, remaining);
+            int days = Math.max(1, (int) Math.round((double) spots * totalDays / totalSpots));
+            if (i == cities.size() - 1) {
+                days = remaining;
+            } else {
+                days = Math.min(days, remaining - (cities.size() - i - 1));
+            }
+            days = Math.max(1, days);
             out.add(days);
             remaining -= days;
         }
-        if (remaining < 0) {
-            for (int i = 0; i < out.size(); i++) {
-                out.set(i, Math.max(1, out.get(i) + remaining));
-                if (remaining >= 0) {
-                    break;
-                }
-                remaining = -remaining;
-            }
+        // 如果剩余天数还没分完，补到最后一个城市
+        if (remaining > 0) {
+            int last = out.size() - 1;
+            out.set(last, out.get(last) + remaining);
         }
         return out;
     }
