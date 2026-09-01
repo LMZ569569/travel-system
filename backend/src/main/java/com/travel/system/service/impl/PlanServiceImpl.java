@@ -72,13 +72,37 @@ public class PlanServiceImpl implements PlanService {
         result.setDays(totalDays);
         result.setDailyHours(DAILY_HOURS);
 
+        // 预处理多段交通：为每个城市匹配到达该城市的交通段
+        List<TransportInfo> cityTransports = new ArrayList<>();
+        List<TransportInfo> allSegments = new ArrayList<>();
+        if (request.getTransportSegments() != null && !request.getTransportSegments().isEmpty()) {
+            for (int i = 0; i < cities.size(); i++) {
+                String city = cities.get(i).getCity();
+                TransportInfo matched = null;
+                for (PlanRequest.TransportSegment seg : request.getTransportSegments()) {
+                    TransportInfo ti = new TransportInfo();
+                    ti.setType(seg.getType());
+                    ti.setScheduleNo(seg.getScheduleNo());
+                    ti.setFromCity(seg.getFromCity());
+                    ti.setToCity(seg.getToCity());
+                    ti.setDepartTime(seg.getDepartTime());
+                    ti.setArriveTime(seg.getArriveTime());
+                    ti.setPrice(seg.getPrice());
+                    allSegments.add(ti);
+                    if (seg.getToCity() != null && seg.getToCity().equals(city)) {
+                        matched = ti;
+                    }
+                }
+                cityTransports.add(matched);
+            }
+        }
+        result.setTransportSegments(allSegments);
+
         List<PlanResult.CityPlanResult> cityResults = new ArrayList<>();
         BigDecimal totalCost = BigDecimal.ZERO;
-        BigDecimal totalRating = BigDecimal.ZERO;
         int totalAttractions = 0;
 
         LocalDate cursor = parseDate(request.getStartDate());
-        String prevCity = request.getOriginCity();
         String transportMode = request.getTransportMode();
 
         for (int i = 0; i < cities.size(); i++) {
@@ -92,9 +116,17 @@ public class PlanServiceImpl implements PlanService {
                 hotel = hotelMapper.findById(cp.getHotelId().longValue());
             }
 
+            // 确定该城市的交通：优先使用用户指定的多段交通，否则按旧逻辑自动匹配
+            TransportInfo cityTransport = null;
+            if (!cityTransports.isEmpty()) {
+                cityTransport = cityTransports.get(i);
+            } else if (i > 0) {
+                cityTransport = matchTransport(cities.get(i - 1).getCity(), cp.getCity(), transportMode);
+            }
+
             PlanResult.CityPlanResult cpr = planCity(
                     cp.getProvince(), cp.getCity(), days, spots, hotel, budget,
-                    i == 0 ? null : prevCity, transportMode, cursor
+                    cityTransport, cursor
             );
             cityResults.add(cpr);
             if (cpr.getCost() != null) {
@@ -111,15 +143,11 @@ public class PlanServiceImpl implements PlanService {
                     }
                 }
             }
-            prevCity = cp.getCity();
             cursor = cursor.plusDays(days);
         }
 
         result.setCities(cityResults);
         result.setTotalCost(totalCost);
-        if (totalAttractions > 0) {
-            result.setAvgRating(totalRating.doubleValue() / totalAttractions);
-        }
         result.setTotalAttractions(totalAttractions);
 
         if (cities.size() == 1) {
@@ -239,8 +267,8 @@ public class PlanServiceImpl implements PlanService {
 
     private PlanResult.CityPlanResult planCity(String province, String city, int days,
                                                List<ScenicSpot> spots, Hotel hotel,
-                                               BigDecimal budget, String originCity,
-                                               String transportMode, LocalDate startDate) {
+                                               BigDecimal budget, TransportInfo transport,
+                                               LocalDate startDate) {
         PlanResult.CityPlanResult cpr = new PlanResult.CityPlanResult();
         cpr.setProvince(province);
         cpr.setCity(city);
@@ -248,14 +276,12 @@ public class PlanServiceImpl implements PlanService {
         cpr.setDays(days);
         cpr.setCost(BigDecimal.ZERO);
 
-        TransportInfo transport = null;
-        if (originCity != null) {
-            transport = matchTransport(originCity, city, transportMode);
-            if (transport != null && transport.getPrice() != null) {
+        if (transport != null) {
+            cpr.setTransport(transport);
+            if (transport.getPrice() != null) {
                 cpr.setCost(cpr.getCost().add(transport.getPrice()));
             }
         }
-        cpr.setTransport(transport);
 
         List<PlanResult.DayPlan> dayPlans = new ArrayList<>();
         int totalAvailableMinutes = days * DAILY_HOURS * 60;

@@ -753,6 +753,55 @@ body {
     overflow-y: auto;
 }
 
+/* ---------- 交通段 ---------- */
+.ts-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: #fafbfc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+.ts-row .ts-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    min-width: 140px;
+}
+.ts-row .ts-mode {
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    background: var(--card);
+    width: 90px;
+}
+.ts-row .ts-info {
+    font-size: 12px;
+    color: var(--text-muted);
+    flex: 1;
+    min-width: 120px;
+}
+.ts-row .ts-remove {
+    height: 30px;
+    padding: 0 10px;
+    background: transparent;
+    border: 1px solid #fca5a5;
+    color: #dc2626;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+}
+.ts-row .ts-remove:hover {
+    background: #fef2f2;
+}
+
 </style>
 </head>
 <body>
@@ -768,12 +817,13 @@ body {
                 <a href="#" id="nav-logout">退出</a>
             </span>
             <a href="login.html" id="nav-login" style="display: inline;">登录</a>
+            <a href="#" id="nav-cart" style="position:relative;margin-left:16px;">🛒 <span id="cart-badge" style="position:absolute;top:-6px;right:-12px;background:#dc2626;color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;display:none;">0</span></a>
         </div>
     </nav>
 
     <div class="container">
         <h1 class="page-title">智能行程规划</h1>
-        <p class="page-subtitle">选择出发城市、出行方式、日期范围和多个目的地，系统自动生成每日时间段安排</p>
+        <p class="page-subtitle">选择出发城市、多个目的地和日期范围，添加多段交通（支持中转和返程），系统自动生成每日时间段安排</p>
 
         <!-- 规划表单 -->
         <div class="card">
@@ -785,14 +835,6 @@ body {
                 <div class="form-group">
                     <label>出发城市</label>
                     <select id="plan-origin"><option value="">请选择城市</option></select>
-                </div>
-                <div class="form-group">
-                    <label>出行方式</label>
-                    <select id="plan-mode">
-                        <option value="self-drive">自驾</option>
-                        <option value="train" selected="">火车</option>
-                        <option value="flight">飞机</option>
-                    </select>
                 </div>
                 <div class="form-group">
                     <label>开始日期</label>
@@ -814,6 +856,18 @@ body {
                     <button class="btn btn-sm" id="btn-add-city" type="button">+ 添加城市</button>
                 </div>
                 <div id="city-rows"></div>
+            </div>
+
+            <!-- 交通段（自动生成，可修改） -->
+            <div id="transport-segments-section" style="margin-top:16px;padding-top:14px;border-top:1px solid #eee;display:none;">
+                <label style="font-size:12px;color:var(--text-muted);letter-spacing:.5px;">交通段（自动根据目的地生成，可点击选择车次/航班）</label>
+                <div id="transport-segments" style="margin-top:8px;"></div>
+                <div style="margin-top:8px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                    <button class="btn btn-sm btn-ghost" id="btn-add-ts" type="button">+ 添加中转段</button>
+                    <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;">
+                        <input type="checkbox" id="ts-return"> 返程到出发城市
+                    </label>
+                </div>
             </div>
 
             <!-- 交通班次管理（可展开） -->
@@ -935,7 +989,26 @@ body {
         <!-- 规划结果 -->
         <div id="plan-result" style="display:none;"></div>
 
+    <!-- 购物车弹窗 -->
+    <div class="modal-mask" id="cart-modal" style="display:none;">
+        <div class="modal" style="max-width:600px;">
+            <div class="modal-header">
+                <span>购物车</span>
+                <button type="button" class="btn btn-sm btn-ghost" onclick="document.getElementById('cart-modal').style.display='none'">关闭</button>
+            </div>
+            <div class="modal-body">
+                <div id="cart-items" style="min-height:100px;">
+                    <div class="empty">购物车为空</div>
+                </div>
+                <div id="cart-total" style="text-align:right;font-size:16px;font-weight:600;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+                    合计：¥<span id="cart-total-amount">0</span>
+                    <button class="btn" id="btn-checkout" style="margin-left:12px;" onclick="checkout()">去结算</button>
+                </div>
+            </div>
+        </div>
     </div>
+
+</div>
 
     <!-- 酒店浏览弹窗 -->
     <div class="modal-mask" id="hotel-modal" style="display:none;">
@@ -1254,8 +1327,23 @@ body {
         window.chooseTransport = function (index) {
             var t = transportQueryData[index];
             if (!t) return;
+            // 填充到交通段
+            var rows = document.querySelectorAll('#transport-segments .ts-row');
+            if (tsTargetIndex >= 0 && tsTargetIndex < rows.length) {
+                var row = rows[tsTargetIndex];
+                var info = row.querySelector('.ts-info');
+                var mode = row.querySelector('.ts-mode');
+                if (mode) mode.value = t.type;
+                if (info) info.textContent = t.scheduleNo + ' ' + t.fromCity + '→' + t.toCity + ' ' + t.departTime + '-' + t.arriveTime;
+                row.dataset.scheduleNo = t.scheduleNo;
+                row.dataset.departTime = t.departTime;
+                row.dataset.arriveTime = t.arriveTime;
+                row.dataset.price = t.price || '0';
+                row.dataset.from = t.fromCity;
+                row.dataset.to = t.toCity;
+            }
             document.getElementById('transport-modal').style.display = 'none';
-            alert('已选择：' + t.scheduleNo + ' ' + t.fromCity + '→' + t.toCity);
+            tsTargetIndex = -1;
         };
 
         function queryTransportByNo() {
@@ -1355,10 +1443,170 @@ body {
             });
             row.querySelector('.btn-remove').addEventListener('click', function () {
                 row.remove();
+                regenTransportSegments();
             });
         }
 
-        document.getElementById('btn-add-city').addEventListener('click', addCityRow);
+        document.getElementById('btn-add-city').addEventListener('click', function () {
+            addCityRow();
+            regenTransportSegments();
+        });
+
+        // ===== 交通段管理 =====
+        var tsTargetIndex = -1; // 当前选择车次的交通段索引
+
+        function regenTransportSegments() {
+            var section = document.getElementById('transport-segments-section');
+            var container = document.getElementById('transport-segments');
+            var origin = document.getElementById('plan-origin').value.trim();
+            var rows = document.querySelectorAll('.city-row');
+            var cities = [];
+            for (var i = 0; i < rows.length; i++) {
+                var city = rows[i].querySelector('.city-city').value;
+                if (city) cities.push(city);
+            }
+
+            if (!origin || cities.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+            section.style.display = 'block';
+
+            // 获取已有段的数据（保留用户已选择的信息）
+            var existing = {};
+            var existingRows = container.querySelectorAll('.ts-row');
+            for (var i = 0; i < existingRows.length; i++) {
+                var label = existingRows[i].querySelector('.ts-label');
+                var mode = existingRows[i].querySelector('.ts-mode');
+                var info = existingRows[i].querySelector('.ts-info');
+                if (label && mode && info) {
+                    var key = label.textContent.trim();
+                    existing[key] = {
+                        mode: mode.value,
+                        info: info.textContent,
+                        scheduleNo: existingRows[i].dataset.scheduleNo || '',
+                        departTime: existingRows[i].dataset.departTime || '',
+                        arriveTime: existingRows[i].dataset.arriveTime || '',
+                        price: existingRows[i].dataset.price || '0'
+                    };
+                }
+            }
+
+            // 构建所需的段列表
+            var segments = [];
+            for (var i = 0; i < cities.length; i++) {
+                var from = i === 0 ? origin : cities[i - 1];
+                var to = cities[i];
+                segments.push({ from: from, to: to, auto: true });
+            }
+            // 返程
+            var returnCb = document.getElementById('ts-return');
+            if (returnCb.checked && cities.length > 0) {
+                var lastCity = cities[cities.length - 1];
+                if (lastCity !== origin) {
+                    segments.push({ from: lastCity, to: origin, auto: true, isReturn: true });
+                }
+            }
+            // 添加用户手动添加的非自动段（保留）
+            for (var i = 0; i < existingRows.length; i++) {
+                var label = existingRows[i].querySelector('.ts-label');
+                if (label && existingRows[i].dataset.auto !== 'true') {
+                    // User-added segment, check if it's still needed
+                    // We keep all manual segments
+                }
+            }
+
+            var html = '';
+            for (var i = 0; i < segments.length; i++) {
+                var s = segments[i];
+                var key = s.isReturn ? '返程: ' + s.from + ' → ' + s.to : '段' + (i + 1) + ': ' + s.from + ' → ' + s.to;
+                var existingData = existing[key] || { mode: 'train', info: '', scheduleNo: '', departTime: '', arriveTime: '', price: '0' };
+                var infoText = existingData.info || '未选择车次';
+                var modeOptions = '<option value="train"' + (existingData.mode === 'train' ? ' selected' : '') + '>火车</option>' +
+                    '<option value="flight"' + (existingData.mode === 'flight' ? ' selected' : '') + '>飞机</option>' +
+                    '<option value="self-drive"' + (existingData.mode === 'self-drive' ? ' selected' : '') + '>自驾</option>';
+                html += '<div class="ts-row" data-index="' + i + '" data-auto="' + s.auto + '"' +
+                    ' data-schedule-no="' + esc(existingData.scheduleNo) + '"' +
+                    ' data-depart-time="' + esc(existingData.departTime) + '"' +
+                    ' data-arrive-time="' + esc(existingData.arriveTime) + '"' +
+                    ' data-price="' + esc(existingData.price) + '"' +
+                    ' data-from="' + esc(s.from) + '" data-to="' + esc(s.to) + '">' +
+                    '<span class="ts-label">' + esc(key) + '</span>' +
+                    '<select class="ts-mode">' + modeOptions + '</select>' +
+                    '<span class="ts-info">' + esc(infoText) + '</span>' +
+                    (existingData.scheduleNo ? '<span style="font-size:12px;color:var(--text-muted);">¥' + esc(existingData.price) + '</span>' : '') +
+                    '<button class="btn btn-sm btn-ghost" onclick="openTransportForSegment(' + i + ')" type="button">选择车次/航班</button>' +
+                    '<button class="btn btn-sm ts-remove" onclick="removeTransportSegment(' + i + ')" type="button">删除</button>' +
+                    '</div>';
+            }
+            container.innerHTML = html;
+        }
+
+        window.openTransportForSegment = function (index) {
+            tsTargetIndex = index;
+            var rows = document.querySelectorAll('#transport-segments .ts-row');
+            if (rows[index]) {
+                var from = rows[index].dataset.from || '';
+                var to = rows[index].dataset.to || '';
+                document.getElementById('tq-from').value = from;
+                document.getElementById('tq-to').value = to;
+                document.getElementById('tq-type').value = 'all';
+            }
+            document.getElementById('transport-modal').style.display = 'flex';
+            browseTransport();
+        };
+
+        window.removeTransportSegment = function (index) {
+            var rows = document.querySelectorAll('#transport-segments .ts-row');
+            if (rows[index]) {
+                rows[index].remove();
+            }
+        };
+
+        document.getElementById('btn-add-ts').addEventListener('click', function () {
+            var container = document.getElementById('transport-segments');
+            var idx = container.querySelectorAll('.ts-row').length;
+            var div = document.createElement('div');
+            div.className = 'ts-row';
+            div.dataset.auto = 'false';
+            div.dataset.from = '';
+            div.dataset.to = '';
+            div.dataset.scheduleNo = '';
+            div.dataset.departTime = '';
+            div.dataset.arriveTime = '';
+            div.dataset.price = '0';
+            div.innerHTML =
+                '<span class="ts-label">中转段' + (idx + 1) + '</span>' +
+                ' <input type="text" placeholder="出发城市" style="height:34px;width:100px;padding:0 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;" class="ts-from-input">' +
+                ' <input type="text" placeholder="到达城市" style="height:34px;width:100px;padding:0 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;" class="ts-to-input">' +
+                '<select class="ts-mode"><option value="train">火车</option><option value="flight">飞机</option></select>' +
+                '<span class="ts-info">未选择车次</span>' +
+                '<button class="btn btn-sm btn-ghost" onclick="openTransportForManualSegment(this)" type="button">选择车次/航班</button>' +
+                '<button class="btn btn-sm ts-remove" onclick="this.closest(\'.ts-row\').remove()" type="button">删除</button>';
+            container.appendChild(div);
+        });
+
+        window.openTransportForManualSegment = function (btn) {
+            var row = btn.closest('.ts-row');
+            var fromInp = row.querySelector('.ts-from-input');
+            var toInp = row.querySelector('.ts-to-input');
+            if (fromInp && fromInp.value) document.getElementById('tq-from').value = fromInp.value;
+            if (toInp && toInp.value) document.getElementById('tq-to').value = toInp.value;
+            tsTargetIndex = -1;
+            // 找到当前行在容器中的索引
+            var container = document.getElementById('transport-segments');
+            var rows = container.querySelectorAll('.ts-row');
+            for (var i = 0; i < rows.length; i++) {
+                if (rows[i] === row) {
+                    tsTargetIndex = i;
+                    break;
+                }
+            }
+            document.getElementById('transport-modal').style.display = 'flex';
+            browseTransport();
+        };
+
+        document.getElementById('ts-return').addEventListener('change', regenTransportSegments);
 
         // ===== 交通/酒店管理面板展开收起 =====
         function bindToggle(btnId, panelId) {
@@ -1396,6 +1644,8 @@ body {
                     citySel.appendChild(opt2);
                 }
             });
+            // 出发城市变化时重新生成交通段
+            document.getElementById('plan-origin').addEventListener('change', regenTransportSegments);
         }
 
         function loadBaseData() {
@@ -1407,6 +1657,7 @@ body {
                     if (document.querySelectorAll('.city-row').length === 0) {
                         addCityRow();
                     }
+                    regenTransportSegments();
                 }
             }).catch(function () {
                 console.error('加载景点失败');
@@ -1510,7 +1761,6 @@ body {
                 return;
             }
             var origin = document.getElementById('plan-origin').value.trim();
-            var mode = document.getElementById('plan-mode').value;
             var start = document.getElementById('plan-start').value;
             var end = document.getElementById('plan-end').value;
             var budgetInput = document.getElementById('plan-budget').value;
@@ -1548,13 +1798,32 @@ body {
             document.getElementById('plan-empty').style.display = 'none';
             document.getElementById('plan-result').style.display = 'none';
 
+            // 收集交通段
+            var transportSegments = [];
+            var tsRows = document.querySelectorAll('#transport-segments .ts-row');
+            for (var i = 0; i < tsRows.length; i++) {
+                var r = tsRows[i];
+                var mode = r.querySelector('.ts-mode');
+                if (mode && mode.value !== 'self-drive' && r.dataset.scheduleNo) {
+                    transportSegments.push({
+                        type: mode.value,
+                        scheduleNo: r.dataset.scheduleNo,
+                        fromCity: r.dataset.from,
+                        toCity: r.dataset.to,
+                        departTime: r.dataset.departTime,
+                        arriveTime: r.dataset.arriveTime,
+                        price: parseFloat(r.dataset.price) || 0
+                    });
+                }
+            }
+
             var body = {
                 originCity: origin || null,
-                transportMode: mode,
                 startDate: start || null,
                 endDate: end || null,
                 budget: budget,
-                cities: cities
+                cities: cities,
+                transportSegments: transportSegments.length > 0 ? transportSegments : null
             };
 
             api('/api/plan', {
@@ -1580,6 +1849,101 @@ body {
             });
         });
 
+        // ===== 购物车按钮 =====
+        document.getElementById('nav-cart').addEventListener('click', function (e) {
+            e.preventDefault();
+            openCart();
+        });
+
+        // ===== 购物车 =====
+        var cartItems = JSON.parse(localStorage.getItem('travel_cart') || '[]');
+
+        function updateCartBadge() {
+            var badge = document.getElementById('cart-badge');
+            if (cartItems.length > 0) {
+                badge.textContent = cartItems.length;
+                badge.style.display = 'inline';
+            } else {
+                badge.style.display = 'none';
+            }
+            localStorage.setItem('travel_cart', JSON.stringify(cartItems));
+        }
+
+        window.addToCart = function (type, name, desc, price) {
+            // 检查是否已存在
+            for (var i = 0; i < cartItems.length; i++) {
+                if (cartItems[i].type === type && cartItems[i].name === name) {
+                    alert('该商品已在购物车中');
+                    return;
+                }
+            }
+            cartItems.push({ type: type, name: name, desc: desc, price: price, quantity: 1 });
+            updateCartBadge();
+            alert('已加入购物车');
+        };
+
+        function openCart() {
+            var container = document.getElementById('cart-items');
+            var total = 0;
+            if (cartItems.length === 0) {
+                container.innerHTML = '<div class="empty">购物车为空</div>';
+                document.getElementById('cart-total-amount').textContent = '0';
+            } else {
+                var html = '<table class="table"><thead><tr><th>类型</th><th>名称</th><th>详情</th><th>单价</th><th>数量</th><th>操作</th></tr></thead><tbody>';
+                for (var i = 0; i < cartItems.length; i++) {
+                    var item = cartItems[i];
+                    var typeName = item.type === 'transport' ? '交通' : (item.type === 'hotel' ? '酒店' : '景点');
+                    total += item.price * item.quantity;
+                    html += '<tr>' +
+                        '<td>' + typeName + '</td>' +
+                        '<td>' + esc(item.name) + '</td>' +
+                        '<td>' + esc(item.desc) + '</td>' +
+                        '<td>¥' + item.price + '</td>' +
+                        '<td>' + item.quantity + '</td>' +
+                        '<td><button class="btn btn-sm btn-ghost" onclick="removeFromCart(' + i + ')">移除</button></td>' +
+                        '</tr>';
+                }
+                html += '</tbody></table>';
+                container.innerHTML = html;
+                document.getElementById('cart-total-amount').textContent = total;
+            }
+            document.getElementById('cart-modal').style.display = 'flex';
+        }
+
+        window.removeFromCart = function (index) {
+            cartItems.splice(index, 1);
+            updateCartBadge();
+            openCart();
+        };
+
+        window.checkout = function () {
+            if (cartItems.length === 0) {
+                alert('购物车为空');
+                return;
+            }
+            var total = 0;
+            for (var i = 0; i < cartItems.length; i++) {
+                total += cartItems[i].price * cartItems[i].quantity;
+            }
+            if (confirm('确认下单？合计 ¥' + total + '\n\n确认后清空购物车，跳转到订单页面。')) {
+                // 保存订单记录
+                var orders = JSON.parse(localStorage.getItem('travel_orders') || '[]');
+                orders.push({
+                    items: JSON.parse(JSON.stringify(cartItems)),
+                    total: total,
+                    date: new Date().toLocaleString()
+                });
+                localStorage.setItem('travel_orders', JSON.stringify(orders));
+                cartItems = [];
+                updateCartBadge();
+                document.getElementById('cart-modal').style.display = 'none';
+                alert('下单成功！可在订单页面查看。');
+            }
+        };
+
+        // 初始化购物车徽章
+        updateCartBadge();
+
         // ===== 渲染规划结果 =====
         var MODE_NAME = { 'self-drive': '自驾', 'train': '火车', 'flight': '飞机' };
         var SLOT_TYPE = {
@@ -1597,7 +1961,9 @@ body {
             var dest = result.cities && result.cities.length
                 ? result.cities.map(function (c) { return c.city || c.province; }).join(' → ')
                 : (result.city || result.province || '');
-            var modeName = MODE_NAME[result.transportMode] || '自驾';
+            var modeName = result.transportSegments && result.transportSegments.length
+                ? '多段交通'
+                : (MODE_NAME[result.transportMode] || '自驾');
 
             var html =
                 '<div class="plan-summary">' +
@@ -1607,6 +1973,23 @@ body {
                     '<div class="stat"><div class="num">¥' + result.totalCost + '</div><div class="label">总花费</div></div>' +
                     '<div class="stat"><div class="num">' + result.avgRating + '</div><div class="label">平均评分</div></div>' +
                 '</div>';
+
+            // 显示所有交通段
+            if (result.transportSegments && result.transportSegments.length > 0) {
+                html += '<div class="card" style="margin-bottom:16px;">';
+                html += '<div class="card-title" style="margin-bottom:10px;">交通段列表</div>';
+                for (var si = 0; si < result.transportSegments.length; si++) {
+                    var seg = result.transportSegments[si];
+                    var tn = seg.type === 'flight' ? '航班' : '火车';
+                    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed var(--border);">' +
+                        '<span style="font-size:13px;">' + tn + ' ' + esc(seg.scheduleNo) + '：' +
+                        esc(seg.fromCity) + ' ' + esc(seg.departTime) + ' → ' + esc(seg.toCity) + ' ' + esc(seg.arriveTime) +
+                        (seg.price ? ' <span style="color:#e07b39;">¥' + seg.price + '</span>' : '') + '</span>' +
+                        '<button class="btn btn-sm btn-ghost" onclick="addToCart(\'transport\',\'' + esc(seg.scheduleNo) + '\',\'' + esc(seg.fromCity) + '→' + esc(seg.toCity) + '\',' + (seg.price || 0) + ')">购票</button>' +
+                        '</div>';
+                }
+                html += '</div>';
+            }
 
             // 兼容旧版单城市结果
             var cityList = (result.cities && result.cities.length) ? result.cities : null;
@@ -1622,7 +2005,8 @@ body {
 
                     if (c.hotel) {
                         html += '<div class="city-info">酒店：' + esc(c.hotel.name) +
-                            (c.hotel.address ? '（' + esc(c.hotel.address) + '）' : '') + '</div>';
+                            (c.hotel.address ? '（' + esc(c.hotel.address) + '）' : '') +
+                            ' <button class="btn btn-sm btn-ghost" onclick="addToCart(\'hotel\',\'' + esc(c.hotel.name) + '\',\'' + esc(c.hotel.city) + '\',' + (c.hotel.price || 0) + ')" style="float:right;">预订</button></div>';
                     }
                     if (c.transport) {
                         var t = c.transport;

@@ -81,6 +81,8 @@ public class PlanResult {
     private List<DayPlan> dayPlans;
     private String province;
     private String city;
+    // 多段交通（完整保留，含中转段）
+    private List<TransportInfo> transportSegments;
 
     public String getOriginCity() { return originCity; }
     public void setOriginCity(String originCity) { this.originCity = originCity; }
@@ -108,4 +110,6 @@ public class PlanResult {
     public void setProvince(String province) { this.province = province; }
     public String getCity() { return city; }
     public void setCity(String city) { this.city = city; }
+    public List<TransportInfo> getTransportSegments() { return transportSegments; }
+    public void setTransportSegments(List<TransportInfo> transportSegments) { this.transportSegments = transportSegments; }
 }
