@@ -384,9 +384,29 @@ body {
 
 .city-row .city-province { width: 100px; }
 .city-row .city-city { width: 100px; }
-.city-row .city-days { width: 70px; }
-.city-row .city-arrive-date { width: 110px; }
-.city-row .city-leave-date { width: 110px; }
+.city-row .city-arrive-date { width: 130px; }
+.city-row .city-leave-date { width: 130px; }
+
+.city-row .btn-move-up,
+.city-row .btn-move-down {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    font-size: 14px;
+    line-height: 30px;
+    text-align: center;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--card);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+}
+.city-row .btn-move-up:hover,
+.city-row .btn-move-down:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
 
 /* ---------- 表格 ---------- */
 .table-wrap {
@@ -1165,7 +1185,7 @@ body {
         <div class="step-content active" id="step-1" data-step="1">
             <div class="card">
                 <div class="step-title">行程基础信息</div>
-                <div class="step-subtitle">请填写出发城市、目的地和日期范围</div>
+                <div class="step-subtitle">请选择出发城市、目的地和游玩日期</div>
 
                 <div class="form-row" style="margin-bottom:20px;">
                     <div class="form-group">
@@ -1177,18 +1197,14 @@ body {
                         <select id="origin-city"><option value="">请选择城市</option></select>
                     </div>
                     <div class="form-group">
-                        <label>开始日期</label>
+                        <label>出发日期</label>
                         <input type="date" id="start-date">
-                    </div>
-                    <div class="form-group">
-                        <label>结束日期</label>
-                        <input type="date" id="end-date">
                     </div>
                 </div>
 
                 <div style="margin-bottom:16px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                        <label style="font-size:12px;color:var(--text-muted);letter-spacing:.5px;">游玩城市</label>
+                        <label style="font-size:12px;color:var(--text-muted);letter-spacing:.5px;">游玩城市（可拖拽排序）</label>
                         <button class="btn btn-sm" id="btn-add-city" type="button">+ 添加城市</button>
                     </div>
                     <div id="city-rows"></div>
@@ -1214,7 +1230,7 @@ body {
                 </div>
 
                 <div class="step-nav">
-                    <div></div>
+                    <button class="btn btn-ghost" onclick="showModeSelector()">返回选择模式</button>
                     <button class="btn" id="step1-next" disabled>下一步</button>
                 </div>
             </div>
@@ -1564,7 +1580,6 @@ body {
                 wizardData.originProvince = document.getElementById('origin-province').value;
                 wizardData.originCity = document.getElementById('origin-city').value;
                 wizardData.startDate = document.getElementById('start-date').value;
-                wizardData.endDate = document.getElementById('end-date').value;
                 wizardData.returnToOrigin = document.getElementById('return-checkbox').checked;
 
                 var returnCityEl = document.getElementById('return-city');
@@ -1579,13 +1594,11 @@ body {
                 for (var i = 0; i < rows.length; i++) {
                     var prov = rows[i].querySelector('.city-province').value;
                     var city = rows[i].querySelector('.city-city').value;
-                    var days = rows[i].querySelector('.city-days').value;
                     var arriveDate = rows[i].querySelector('.city-arrive-date').value;
                     var leaveDate = rows[i].querySelector('.city-leave-date').value;
                     destCities.push({
                         province: prov,
                         cityName: city,
-                        days: days ? parseInt(days, 10) : null,
                         arriveDate: arriveDate || null,
                         leaveDate: leaveDate || null
                     });
@@ -1598,7 +1611,6 @@ body {
         function validateStep1() {
             var origin = document.getElementById('origin-city').value;
             var start = document.getElementById('start-date').value;
-            var end = document.getElementById('end-date').value;
             var rows = document.querySelectorAll('#city-rows .city-row');
             var hasCity = false;
             for (var i = 0; i < rows.length; i++) {
@@ -1607,7 +1619,7 @@ body {
                     break;
                 }
             }
-            return origin && start && end && hasCity;
+            return origin && start && hasCity;
         }
 
         function updateNextButton() {
@@ -1635,7 +1647,6 @@ body {
             });
 
             document.getElementById('start-date').addEventListener('change', updateNextButton);
-            document.getElementById('end-date').addEventListener('change', updateNextButton);
             document.getElementById('return-checkbox').addEventListener('change', function () {
                 var show = !this.checked;
                 document.getElementById('return-city-selector').style.display = show ? 'block' : 'none';
@@ -1668,11 +1679,12 @@ body {
             var row = document.createElement('div');
             row.className = 'city-row';
             row.innerHTML =
+                '<button type="button" class="btn-move-up" title="上移">&#9650;</button>' +
+                '<button type="button" class="btn-move-down" title="下移">&#9660;</button>' +
                 '<select class="city-province"></select>' +
                 '<select class="city-city"></select>' +
-                '<input type="number" class="city-days" min="1" max="30" placeholder="停留天数(可空)">' +
-                '<input type="date" class="city-arrive-date" placeholder="到达日期" style="width:150px;">' +
-                '<input type="date" class="city-leave-date" placeholder="离开日期" style="width:150px;">' +
+                '<input type="date" class="city-arrive-date" placeholder="到达日期" title="到达日期">' +
+                '<input type="date" class="city-leave-date" placeholder="离开日期" title="离开日期">' +
                 '<button type="button" class="btn btn-sm btn-danger btn-remove-city">删除</button>';
             wrap.appendChild(row);
 
@@ -1682,6 +1694,28 @@ body {
 
             provSel.addEventListener('change', function () {
                 populateCity(provSel.value, citySel);
+            });
+            provSel.addEventListener('change', updateNextButton);
+            citySel.addEventListener('change', updateNextButton);
+            row.querySelector('.city-arrive-date').addEventListener('change', updateNextButton);
+            row.querySelector('.city-leave-date').addEventListener('change', updateNextButton);
+
+            // 上移
+            row.querySelector('.btn-move-up').addEventListener('click', function () {
+                var prev = row.previousElementSibling;
+                if (prev) {
+                    wrap.insertBefore(row, prev);
+                    updateNextButton();
+                }
+            });
+
+            // 下移
+            row.querySelector('.btn-move-down').addEventListener('click', function () {
+                var next = row.nextElementSibling;
+                if (next) {
+                    wrap.insertBefore(next, row);
+                    updateNextButton();
+                }
             });
 
             row.querySelector('.btn-remove-city').addEventListener('click', function () {
@@ -2090,7 +2124,7 @@ body {
 
         function loadHotelsForCity(index, city) {
             var tableDiv = document.getElementById('hotel-table-' + index);
-            api('/api/hotel/list?city=' + encodeURIComponent(city))
+            api('/api/hotel/city?city=' + encodeURIComponent(city))
                 .then(function (res) {
                     if (res.code === 200 && res.data && res.data.length > 0) {
                         var html = '<table class="table"><thead><tr>' +
@@ -2213,11 +2247,19 @@ body {
             }
             html += '</div>';
 
+            // 计算结束日期
+            var endDate = wizardData.startDate || '';
+            var cityRows = document.querySelectorAll('#city-rows .city-row');
+            for (var cr = cityRows.length - 1; cr >= 0; cr--) {
+                var ld = cityRows[cr].querySelector('.city-leave-date').value;
+                if (ld) { endDate = ld; break; }
+            }
+
             // 日期信息
             html += '<div class="confirm-section">';
             html += '<div class="confirm-section-title"><span class="icon">&#128197;</span> 日期信息</div>';
             html += '<div class="confirm-item"><span class="label">开始日期</span><span class="value">' + esc(wizardData.startDate) + '</span></div>';
-            html += '<div class="confirm-item"><span class="label">结束日期</span><span class="value">' + esc(wizardData.endDate) + '</span></div>';
+            html += '<div class="confirm-item"><span class="label">结束日期</span><span class="value">' + esc(endDate) + '</span></div>';
             html += '</div>';
 
             // 交通信息
@@ -2340,12 +2382,10 @@ body {
             for (var i = 0; i < rows.length; i++) {
                 var prov = rows[i].querySelector('.city-province').value;
                 var city = rows[i].querySelector('.city-city').value;
-                var days = rows[i].querySelector('.city-days').value;
                 if (!prov) continue;
                 destCities.push({
                     province: prov,
                     city: city || null,
-                    days: days ? parseInt(days, 10) : null,
                     hotelId: wizardData.hotelSelections[i] && !wizardData.hotelSelections[i].noHotel ? wizardData.hotelSelections[i].hotelId : null
                 });
             }
@@ -2378,10 +2418,21 @@ body {
                 }
             }
 
+            // 计算结束日期（取最后一个城市的离开日期）
+            var endDate = wizardData.startDate || null;
+            var rows = document.querySelectorAll('#city-rows .city-row');
+            for (var i = rows.length - 1; i >= 0; i--) {
+                var leaveDate = rows[i].querySelector('.city-leave-date').value;
+                if (leaveDate) {
+                    endDate = leaveDate;
+                    break;
+                }
+            }
+
             var body = {
                 originCity: wizardData.originCity || null,
                 startDate: wizardData.startDate || null,
-                endDate: wizardData.endDate || null,
+                endDate: endDate,
                 cities: destCities,
                 transportSegments: transportSegments.length > 0 ? transportSegments : null
             };
@@ -2665,6 +2716,8 @@ body {
             var row = document.createElement('div');
             row.className = 'city-row';
             row.innerHTML =
+                '<button type="button" class="btn-move-up" title="上移">&#9650;</button>' +
+                '<button type="button" class="btn-move-down" title="下移">&#9660;</button>' +
                 '<select class="city-province" style="width:100px;"></select>' +
                 '<select class="city-city" style="width:100px;"></select>' +
                 '<input type="number" class="city-days" min="1" max="30" placeholder="停留天数(可空)" style="width:90px;">' +
@@ -2680,6 +2733,24 @@ body {
             });
             provSel.addEventListener('change', updateFuzzyBtn);
             citySel.addEventListener('change', updateFuzzyBtn);
+
+            // 上移
+            row.querySelector('.btn-move-up').addEventListener('click', function () {
+                var prev = row.previousElementSibling;
+                if (prev) {
+                    wrap.insertBefore(row, prev);
+                    updateFuzzyBtn();
+                }
+            });
+
+            // 下移
+            row.querySelector('.btn-move-down').addEventListener('click', function () {
+                var next = row.nextElementSibling;
+                if (next) {
+                    wrap.insertBefore(next, row);
+                    updateFuzzyBtn();
+                }
+            });
 
             row.querySelector('.btn-remove-fuzzy-city').addEventListener('click', function () {
                 row.remove();
