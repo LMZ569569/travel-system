@@ -21,6 +21,13 @@
         <java.version>17</java.version>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>aliyun</id>
+            <url>https://maven.aliyun.com/repository/public</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <!-- Web 依赖：提供接口能力 -->
         <dependency>
