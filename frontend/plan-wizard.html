@@ -884,6 +884,30 @@ body {
     accent-color: var(--accent);
 }
 
+/* ---------- 交通方式选项 ---------- */
+.radio-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 14px;
+    font-size: 13px;
+    color: var(--text-muted);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all .2s;
+    user-select: none;
+}
+.radio-chip:has(input:checked) {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, var(--card));
+}
+.radio-chip input {
+    display: none;
+}
+
 /* ---------- 中转方案 ---------- */
 .transfer-plan {
     padding: 14px;
@@ -1164,14 +1188,14 @@ body {
                 <div class="form-row" style="margin-bottom:20px;">
                     <div class="form-group" style="flex:1;">
                         <label>交通方式</label>
-                        <div style="display:flex;gap:16px;padding-top:6px;">
-                            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:14px;color:var(--text);">
+                        <div style="display:flex;gap:8px;padding-top:4px;">
+                            <label class="radio-chip">
                                 <input type="radio" name="fuzzy-transport" value="self-drive" checked> 自驾
                             </label>
-                            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:14px;color:var(--text);">
+                            <label class="radio-chip">
                                 <input type="radio" name="fuzzy-transport" value="train"> 火车
                             </label>
-                            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:14px;color:var(--text);">
+                            <label class="radio-chip">
                                 <input type="radio" name="fuzzy-transport" value="flight"> 飞机
                             </label>
                         </div>
