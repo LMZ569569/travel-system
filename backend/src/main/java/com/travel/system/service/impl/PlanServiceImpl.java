@@ -109,7 +109,7 @@ public class PlanServiceImpl implements PlanService {
             PlanRequest.CityPlan cp = cities.get(i);
             int days = cityDays.get(i);
             List<ScenicSpot> spots = allCitySpots.get(i);
-            BigDecimal budget = cityBudgets.get(i);
+            BigDecimal budget = cityBudgets != null ? cityBudgets.get(i) : null;
 
             Hotel hotel = null;
             if (cp.getHotelId() != null && cp.getHotelId() > 0) {
