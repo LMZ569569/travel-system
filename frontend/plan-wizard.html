@@ -3401,7 +3401,7 @@ body {
                     // 图片
                     var imgDiv = document.getElementById('spot-detail-image');
                     if (spot.image && spot.image.indexOf('http') === 0) {
-                        imgDiv.innerHTML = '<img src="' + spot.image + '" alt="' + esc(spot.name) + '" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'<div class=\\\'spot-image-placeholder\\\'><span>🏞️</span><span>\\' + esc(spot.name) + '\\'</span></div>\'">';
+                        imgDiv.innerHTML = '<img src="' + spot.image + '" alt="' + esc(spot.name) + '" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'<div class=\\\'spot-image-placeholder\\\'><span>🏞️</span><span>' + esc(spot.name) + '</span></div>\'">';
                     } else {
                         imgDiv.innerHTML = '<div class="spot-image-placeholder"><span>🏞️</span><span>' + esc(spot.name) + '</span></div>';
                     }
