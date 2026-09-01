@@ -23,7 +23,11 @@ public class TrainScheduleController {
 
     @GetMapping("/route")
     public Result<List<TrainSchedule>> route(@RequestParam String from, @RequestParam String to) {
-        return Result.success(trainScheduleMapper.findByRoute(from, to));
+        List<TrainSchedule> result = trainScheduleMapper.findByRoute(from, to);
+        if (result == null || result.isEmpty()) {
+            result = trainScheduleMapper.findByRoute(to, from);
+        }
+        return Result.success(result);
     }
 
     @GetMapping("/query")
@@ -60,19 +64,36 @@ public class TrainScheduleController {
 
     @GetMapping("/transfer")
     public Result<List<TransferPlan>> transfer(@RequestParam String from, @RequestParam String to) {
-        // 1. 找所有中转城市
+        // 双向查询中转城市
+        Set<String> midCities = new HashSet<>();
+
+        // 正向：from 出发能到的城市
         List<String> reachable = trainScheduleMapper.findToCitiesByFrom(from);
+        // 反向：to 作为出发能到的城市（反向路线）
+        List<String> reverseReachable = trainScheduleMapper.findToCitiesByFrom(to);
+        // 能到达 to 的城市
         List<String> canReach = trainScheduleMapper.findFromCitiesByTo(to);
-        Set<String> midCities = new HashSet<>(reachable);
-        midCities.retainAll(canReach);
+        // 从 to 出发能到达的城市反向
+        List<String> reverseCanReach = trainScheduleMapper.findFromCitiesByTo(from);
+
+        midCities.addAll(reachable); midCities.retainAll(canReach);
+        // 也查反向路线
+        Set<String> alt = new HashSet<>(reverseReachable);
+        alt.retainAll(reverseCanReach);
+        midCities.addAll(alt);
         midCities.remove(from);
         midCities.remove(to);
 
-        // 2. 找每个中转城市的最优方案
         List<TransferPlan> plans = new ArrayList<>();
         for (String mid : midCities) {
             List<TrainSchedule> firstLegs = trainScheduleMapper.findByRoute(from, mid);
+            if (firstLegs == null || firstLegs.isEmpty()) {
+                firstLegs = trainScheduleMapper.findByRoute(mid, from);
+            }
             List<TrainSchedule> secondLegs = trainScheduleMapper.findByRoute(mid, to);
+            if (secondLegs == null || secondLegs.isEmpty()) {
+                secondLegs = trainScheduleMapper.findByRoute(to, mid);
+            }
             if (!firstLegs.isEmpty() && !secondLegs.isEmpty()) {
                 TrainSchedule leg1 = firstLegs.get(0);
                 TrainSchedule leg2 = secondLegs.get(0);
@@ -80,7 +101,6 @@ public class TrainScheduleController {
             }
         }
 
-        // 按总价排序
         plans.sort(Comparator.comparingDouble(TransferPlan::getTotalPrice));
         return Result.success(plans);
     }

@@ -23,7 +23,11 @@ public class FlightScheduleController {
 
     @GetMapping("/route")
     public Result<List<FlightSchedule>> route(@RequestParam String from, @RequestParam String to) {
-        return Result.success(flightScheduleMapper.findByRoute(from, to));
+        List<FlightSchedule> result = flightScheduleMapper.findByRoute(from, to);
+        if (result == null || result.isEmpty()) {
+            result = flightScheduleMapper.findByRoute(to, from);
+        }
+        return Result.success(result);
     }
 
     @GetMapping("/query")
@@ -60,17 +64,30 @@ public class FlightScheduleController {
 
     @GetMapping("/transfer")
     public Result<List<TransferPlan>> transfer(@RequestParam String from, @RequestParam String to) {
+        Set<String> midCities = new HashSet<>();
+
         List<String> reachable = flightScheduleMapper.findToCitiesByFrom(from);
+        List<String> reverseReachable = flightScheduleMapper.findToCitiesByFrom(to);
         List<String> canReach = flightScheduleMapper.findFromCitiesByTo(to);
-        Set<String> midCities = new HashSet<>(reachable);
-        midCities.retainAll(canReach);
+        List<String> reverseCanReach = flightScheduleMapper.findFromCitiesByTo(from);
+
+        midCities.addAll(reachable); midCities.retainAll(canReach);
+        Set<String> alt = new HashSet<>(reverseReachable);
+        alt.retainAll(reverseCanReach);
+        midCities.addAll(alt);
         midCities.remove(from);
         midCities.remove(to);
 
         List<TransferPlan> plans = new ArrayList<>();
         for (String mid : midCities) {
             List<FlightSchedule> firstLegs = flightScheduleMapper.findByRoute(from, mid);
+            if (firstLegs == null || firstLegs.isEmpty()) {
+                firstLegs = flightScheduleMapper.findByRoute(mid, from);
+            }
             List<FlightSchedule> secondLegs = flightScheduleMapper.findByRoute(mid, to);
+            if (secondLegs == null || secondLegs.isEmpty()) {
+                secondLegs = flightScheduleMapper.findByRoute(to, mid);
+            }
             if (!firstLegs.isEmpty() && !secondLegs.isEmpty()) {
                 FlightSchedule leg1 = firstLegs.get(0);
                 FlightSchedule leg2 = secondLegs.get(0);

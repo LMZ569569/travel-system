@@ -385,6 +385,8 @@ body {
 .city-row .city-province { width: 150px; }
 .city-row .city-city { width: 150px; }
 .city-row .city-days { width: 130px; }
+.city-row .city-arrive-date { width: 150px; }
+.city-row .city-leave-date { width: 150px; }
 
 /* ---------- 表格 ---------- */
 .table-wrap {
@@ -890,6 +892,11 @@ body {
     color: #e07b39;
 }
 
+.transfer-plan.selected {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+
 /* ---------- 响应式 ---------- */
 @media (max-width: 768px) {
     .steps-indicator {
@@ -1062,6 +1069,20 @@ body {
                 <div class="checkbox-group" style="margin-bottom:4px;">
                     <input type="checkbox" id="return-checkbox" checked>
                     <label for="return-checkbox" style="cursor:pointer;font-size:14px;color:var(--text);">行程结束后返回出发城市</label>
+                </div>
+
+                <div id="return-city-selector" style="display:none;margin-top:12px;padding:12px;background:#fafbfc;border:1px solid var(--border);border-radius:8px;">
+                    <label style="font-size:12px;color:var(--text-muted);letter-spacing:.5px;display:block;margin-bottom:8px;">选择返程到达城市：</label>
+                    <div class="form-row" style="gap:12px;">
+                        <div class="form-group">
+                            <label>省份</label>
+                            <select class="return-province" onchange="populateCity(this.value, document.getElementById('return-city'))"><option value="">请选择省份</option></select>
+                        </div>
+                        <div class="form-group">
+                            <label>城市</label>
+                            <select id="return-city"><option value="">请选择城市</option></select>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="step-nav">
@@ -1323,10 +1344,16 @@ body {
                 pairs.push({ from: from, to: to });
             }
             var returnCb = document.getElementById('return-checkbox');
+            var returnCityEl = document.getElementById('return-city');
             if (returnCb.checked && destCities.length > 0) {
                 var last = destCities[destCities.length - 1];
                 if (last !== origin) {
                     pairs.push({ from: last, to: origin, isReturn: true });
+                }
+            } else if (!returnCb.checked && destCities.length > 0 && returnCityEl && returnCityEl.value) {
+                var last = destCities[destCities.length - 1];
+                if (last !== returnCityEl.value) {
+                    pairs.push({ from: last, to: returnCityEl.value, isReturn: true });
                 }
             }
             return pairs;
@@ -1412,16 +1439,27 @@ body {
                 wizardData.endDate = document.getElementById('end-date').value;
                 wizardData.returnToOrigin = document.getElementById('return-checkbox').checked;
 
+                var returnCityEl = document.getElementById('return-city');
+                var returnProvEl = document.querySelector('.return-province');
+                wizardData.returnCity = wizardData.returnToOrigin ? null : {
+                    province: returnProvEl ? returnProvEl.value : '',
+                    cityName: returnCityEl ? returnCityEl.value : ''
+                };
+
                 var destCities = [];
                 var rows = document.querySelectorAll('#city-rows .city-row');
                 for (var i = 0; i < rows.length; i++) {
                     var prov = rows[i].querySelector('.city-province').value;
                     var city = rows[i].querySelector('.city-city').value;
                     var days = rows[i].querySelector('.city-days').value;
+                    var arriveDate = rows[i].querySelector('.city-arrive-date').value;
+                    var leaveDate = rows[i].querySelector('.city-leave-date').value;
                     destCities.push({
                         province: prov,
                         cityName: city,
-                        days: days ? parseInt(days, 10) : null
+                        days: days ? parseInt(days, 10) : null,
+                        arriveDate: arriveDate || null,
+                        leaveDate: leaveDate || null
                     });
                 }
                 wizardData.cities = destCities;
@@ -1471,6 +1509,8 @@ body {
             document.getElementById('start-date').addEventListener('change', updateNextButton);
             document.getElementById('end-date').addEventListener('change', updateNextButton);
             document.getElementById('return-checkbox').addEventListener('change', function () {
+                var show = !this.checked;
+                document.getElementById('return-city-selector').style.display = show ? 'block' : 'none';
                 updateNextButton();
             });
 
@@ -1503,6 +1543,8 @@ body {
                 '<select class="city-province"></select>' +
                 '<select class="city-city"></select>' +
                 '<input type="number" class="city-days" min="1" max="30" placeholder="停留天数(可空)">' +
+                '<input type="date" class="city-arrive-date" placeholder="到达日期" style="width:150px;">' +
+                '<input type="date" class="city-leave-date" placeholder="离开日期" style="width:150px;">' +
                 '<button type="button" class="btn btn-sm btn-danger btn-remove-city">删除</button>';
             wrap.appendChild(row);
 
@@ -1562,6 +1604,21 @@ body {
                             '</div>' +
                             '<div class="table-wrap" id="transport-table-' + i + '">' +
                                 '<div class="loading" style="padding:24px 0;">点击上方选项卡查询交通信息</div>' +
+                            '</div>' +
+                            '<div class="self-drive-section" style="margin-top:12px;">' +
+                                '<p>以上没有合适的？试试手动填写</p>' +
+                                '<button class="btn btn-outline btn-sm" onclick="showManualTransportForm(' + i + ')">手动填写</button>' +
+                            '</div>' +
+                            '<div id="manual-transport-form-' + i + '" style="display:none;margin-top:12px;padding:16px;border:1px solid var(--border);border-radius:8px;background:#fafbfc;">' +
+                                '<div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:12px;">手动填写交通信息</div>' +
+                                '<div class="form-row" style="gap:12px;margin-bottom:12px;">' +
+                                    '<div class="form-group"><label>车次号/航班号</label><input type="text" id="manual-no-' + i + '" placeholder="如 G1234 / CA1234" style="width:160px;"></div>' +
+                                    '<div class="form-group"><label>出发时间</label><input type="time" id="manual-depart-' + i + '" style="width:130px;"></div>' +
+                                    '<div class="form-group"><label>到达时间</label><input type="time" id="manual-arrive-' + i + '" style="width:130px;"></div>' +
+                                    '<div class="form-group"><label>票价</label><input type="number" id="manual-price-' + i + '" min="0" placeholder="0" style="width:120px;"></div>' +
+                                '</div>' +
+                                '<button class="btn btn-sm" onclick="confirmManualTransport(' + i + ')">确认</button>' +
+                                '<button class="btn btn-sm btn-ghost" style="margin-left:8px;" onclick="hideManualTransportForm(' + i + ')">取消</button>' +
                             '</div>' +
                             '<div class="self-drive-section">' +
                                 '<p>或者选择自驾出行</p>' +
@@ -1663,33 +1720,66 @@ body {
         function renderTransferOptions(index, plans) {
             var tableDiv = document.getElementById('transport-table-' + index);
             if (!plans || plans.length === 0) {
-                tableDiv.innerHTML = '<div class="empty" style="padding:24px 0;">未找到中转方案</div>';
+                tableDiv.innerHTML = '<div class="empty" style="padding:24px 0;">未找到中转方案</div>' +
+                    '<div class="no-hotel-option" onclick="closeTransferOptions(' + index + ')" style="margin-top:8px;">' +
+                    '<span style="font-size:18px;">&#10005;</span> 无合适中转，返回上一级</div>';
                 return;
             }
 
-            var html = '<div style="margin-bottom:8px;font-weight:600;font-size:14px;color:var(--ink);">中转方案（共 ' + plans.length + ' 种）</div>';
-            html += '<table class="table"><thead><tr>' +
-                '<th>中转城市</th><th>第一段</th><th>第二段</th><th>总价</th><th>总耗时</th><th>操作</th>' +
-                '</tr></thead><tbody>';
+            var html = '<div style="margin-bottom:12px;font-weight:600;font-size:14px;color:var(--ink);">中转方案（共 ' + plans.length + ' 种）</div>';
 
             for (var i = 0; i < plans.length; i++) {
                 var p = plans[i];
                 var isSelected = wizardData.transportSelections[index] &&
                     wizardData.transportSelections[index].scheduleNo === (p.firstLeg + ',' + p.secondLeg);
 
-                html += '<tr' + (isSelected ? ' class="selected"' : '') + '>' +
-                    '<td><span class="badge badge-transfer">' + esc(p.transferCity) + '</span></td>' +
-                    '<td style="font-size:12px;">' + esc(p.firstLeg) + '<br><span class="text-muted">' + esc(p.firstFrom) + '→' + esc(p.firstTo) + ' ' + p.firstDepart + '-' + p.firstArrive + '</span></td>' +
-                    '<td style="font-size:12px;">' + esc(p.secondLeg) + '<br><span class="text-muted">' + esc(p.secondFrom) + '→' + esc(p.secondTo) + ' ' + p.secondDepart + '-' + p.secondArrive + '</span></td>' +
-                    '<td><strong>¥' + p.totalPrice + '</strong></td>' +
-                    '<td>' + Math.floor(p.totalMinutes / 60) + 'h' + (p.totalMinutes % 60) + 'min</td>' +
-                    '<td><button class="btn btn-sm' + (isSelected ? ' btn-ghost' : '') + '" onclick="chooseTransfer(' + index + ',\'' + esc(p.firstLeg) + '\',\'' + esc(p.secondLeg) + '\',\'' + esc(p.firstFrom) + '\',\'' + esc(p.firstTo) + '\',\'' + esc(p.secondFrom) + '\',\'' + esc(p.secondTo) + '\',\'' + p.firstDepart + '\',\'' + p.firstArrive + '\',\'' + p.secondDepart + '\',\'' + p.secondArrive + '\',' + p.totalPrice + ')">' +
-                    (isSelected ? '已选择' : '选择此方案') + '</button></td>' +
-                    '</tr>';
+                var duration = Math.floor(p.totalMinutes / 60) + '小时' + (p.totalMinutes % 60) + '分';
+
+                html += '<div class="transfer-plan' + (isSelected ? ' selected' : '') + '" style="' + (isSelected ? 'border-color:var(--accent);background:var(--accent-soft);' : '') + '">' +
+                    '<div class="transfer-header">' +
+                        '<span class="badge badge-transfer">中转 ' + esc(p.transferCity) + '</span>' +
+                        '<span class="transfer-price">¥' + p.totalPrice + '</span>' +
+                    '</div>' +
+                    '<div class="transfer-legs">' +
+                        '<div style="margin-bottom:6px;">' +
+                            '<span class="badge badge-train">' + esc(p.firstLeg) + '</span> ' +
+                            esc(p.firstFrom) + ' → ' + esc(p.firstTo) + ' ' +
+                            p.firstDepart + ' - ' + p.firstArrive +
+                        '</div>' +
+                        '<div style="text-align:center;font-size:12px;color:var(--text-muted);padding:2px 0;">' +
+                            '&#8595; 在 ' + esc(p.transferCity) + ' 中转' +
+                        '</div>' +
+                        '<div style="margin-top:6px;">' +
+                            '<span class="badge badge-train">' + esc(p.secondLeg) + '</span> ' +
+                            esc(p.secondFrom) + ' → ' + esc(p.secondTo) + ' ' +
+                            p.secondDepart + ' - ' + p.secondArrive +
+                        '</div>' +
+                    '</div>' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);">' +
+                        '<span style="font-size:12px;color:var(--text-muted);">总耗时：' + duration + '</span>' +
+                        '<button class="btn btn-sm' + (isSelected ? ' btn-ghost' : '') + '" onclick="chooseTransfer(' + index + ',\'' + esc(p.firstLeg) + '\',\'' + esc(p.secondLeg) + '\',\'' + esc(p.firstFrom) + '\',\'' + esc(p.firstTo) + '\',\'' + esc(p.secondFrom) + '\',\'' + esc(p.secondTo) + '\',\'' + p.firstDepart + '\',\'' + p.firstArrive + '\',\'' + p.secondDepart + '\',\'' + p.secondArrive + '\',' + p.totalPrice + ')">' +
+                        (isSelected ? '已选择' : '选择此方案') + '</button>' +
+                    '</div>' +
+                '</div>';
             }
-            html += '</tbody></table>';
+
+            html += '<div class="no-hotel-option" onclick="closeTransferOptions(' + index + ')" style="margin-top:12px;">' +
+                '<span style="font-size:18px;">&#10005;</span> 无合适中转，返回上一级</div>';
+
             tableDiv.innerHTML = html;
         }
+
+        window.closeTransferOptions = function (index) {
+            // 切换回火车选项卡
+            var tabBtns = document.querySelectorAll('#transport-step-' + index + ' .tab-btn');
+            for (var i = 0; i < tabBtns.length; i++) {
+                tabBtns[i].classList.remove('active');
+                if (tabBtns[i].dataset.tab === 'train') {
+                    tabBtns[i].classList.add('active');
+                }
+            }
+            loadTransportTab(index, 'train');
+        };
 
         // 选择直达交通
         window.chooseTransport = function (index, type, scheduleNo, departTime, arriveTime, price) {
@@ -1733,6 +1823,55 @@ body {
             }
         };
 
+        // 手动填写交通
+        window.showManualTransportForm = function (index) {
+            var form = document.getElementById('manual-transport-form-' + index);
+            if (form) form.style.display = 'block';
+        };
+
+        window.hideManualTransportForm = function (index) {
+            var form = document.getElementById('manual-transport-form-' + index);
+            if (form) {
+                form.style.display = 'none';
+                // 清空输入
+                document.getElementById('manual-no-' + index).value = '';
+                document.getElementById('manual-depart-' + index).value = '';
+                document.getElementById('manual-arrive-' + index).value = '';
+                document.getElementById('manual-price-' + index).value = '';
+            }
+        };
+
+        window.confirmManualTransport = function (index) {
+            var no = document.getElementById('manual-no-' + index).value.trim();
+            var depart = document.getElementById('manual-depart-' + index).value;
+            var arrive = document.getElementById('manual-arrive-' + index).value;
+            var price = parseFloat(document.getElementById('manual-price-' + index).value) || 0;
+
+            if (!no) {
+                alert('请填写车次号/航班号');
+                return;
+            }
+            if (!depart) {
+                alert('请填写出发时间');
+                return;
+            }
+            if (!arrive) {
+                alert('请填写到达时间');
+                return;
+            }
+
+            wizardData.transportSelections[index].type = 'manual';
+            wizardData.transportSelections[index].scheduleNo = no;
+            wizardData.transportSelections[index].departTime = depart;
+            wizardData.transportSelections[index].arriveTime = arrive;
+            wizardData.transportSelections[index].price = price;
+            wizardData.transportSelections[index].selected = true;
+            wizardData.transportSelections[index].isSelfDrive = false;
+            wizardData.transportSelections[index].isTransfer = false;
+            updateTransportSelectionDisplay(index);
+            hideManualTransportForm(index);
+        };
+
         // 选择自驾
         window.chooseSelfDrive = function (index) {
             wizardData.transportSelections[index].type = 'self-drive';
@@ -1762,6 +1901,9 @@ body {
                 label = '<span class="selection-indicator"><span class="badge badge-transfer">中转</span> ' +
                     esc(sel.scheduleNo) + ' ' + esc(sel.transferDetail.firstFrom) + '→' + esc(sel.transferDetail.secondTo) +
                     ' ' + sel.departTime + '-' + sel.arriveTime + '  ¥' + sel.price + '</span>';
+            } else if (sel.type === 'manual') {
+                label = '<span class="selection-indicator"><span class="badge badge-train">手动</span> ' +
+                    esc(sel.scheduleNo) + ' ' + sel.departTime + '→' + sel.arriveTime + '  ¥' + sel.price + '</span>';
             } else {
                 var typeName = sel.type === 'train' ? '火车' : '航班';
                 var badgeClass = sel.type === 'train' ? 'badge-train' : 'badge-flight';
@@ -1937,6 +2079,9 @@ body {
             if (wizardData.returnToOrigin && destCities.length > 0 && destCities[destCities.length - 1] !== origin) {
                 html += '<span class="route-arrow">&#8594;</span>';
                 html += '<span class="route-city">' + esc(origin) + '</span>';
+            } else if (!wizardData.returnToOrigin && wizardData.returnCity && wizardData.returnCity.cityName && destCities.length > 0) {
+                html += '<span class="route-arrow">&#8594;</span>';
+                html += '<span class="route-city">' + esc(wizardData.returnCity.cityName) + '</span>';
             }
             html += '</div>';
 
@@ -1965,6 +2110,9 @@ body {
                         transportDesc = '<span class="badge badge-transfer">中转</span> ' + esc(sel.scheduleNo) + ' ' +
                             esc(sel.transferDetail.firstFrom) + '→' + esc(sel.transferDetail.secondTo) + ' ' +
                             sel.departTime + '-' + sel.arriveTime;
+                    } else if (sel.type === 'manual') {
+                        transportDesc = '<span class="badge badge-train">手动</span> ' +
+                            esc(sel.scheduleNo) + ' ' + sel.departTime + '→' + sel.arriveTime;
                     } else {
                         var typeName = sel.type === 'train' ? '火车' : '航班';
                         var badgeClass = sel.type === 'train' ? 'badge-train' : 'badge-flight';
@@ -2303,6 +2451,9 @@ body {
                 if (data.code === 200) {
                     allCities = data.data;
                     initStep1();
+                    // 填充返程城市省份下拉
+                    var returnProvEl = document.querySelector('.return-province');
+                    if (returnProvEl) populateProvince(returnProvEl);
                     // 默认给一行目的地
                     if (document.querySelectorAll('.city-row').length === 0) {
                         addCityRow();
