@@ -186,7 +186,7 @@ public class PlanServiceImpl implements PlanService {
         }
         int total = 0;
         for (PlanRequest.CityPlan cp : cities) {
-            total += cp.getDays() > 0 ? cp.getDays() : 1;
+            total += cp.getDays() != null && cp.getDays() > 0 ? cp.getDays() : 1;
         }
         return total > 0 ? total : 3;
     }
@@ -214,7 +214,7 @@ public class PlanServiceImpl implements PlanService {
         if (totalSpots == 0) {
             List<Integer> out = new ArrayList<>();
             for (int i = 0; i < cities.size(); i++) {
-                out.add(cities.get(i).getDays() > 0 ? cities.get(i).getDays() : 1);
+                out.add(cities.get(i).getDays() != null && cities.get(i).getDays() > 0 ? cities.get(i).getDays() : 1);
             }
             return out;
         }
@@ -227,7 +227,7 @@ public class PlanServiceImpl implements PlanService {
             }
             int spots = allCitySpots.get(i).size();
             int days = (int) Math.ceil((double) spots / 3);
-            int max = cities.get(i).getDays() > 0 ? cities.get(i).getDays() : Integer.MAX_VALUE;
+            int max = cities.get(i).getDays() != null && cities.get(i).getDays() > 0 ? cities.get(i).getDays() : Integer.MAX_VALUE;
             days = Math.min(days, max);
             days = Math.min(days, remaining);
             out.add(days);
