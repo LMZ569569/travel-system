@@ -1,0 +1,2324 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>旅游规划系统 - 智能行程向导</title>
+    <style>/* ========== 旅游规划系统 共用样式（简约高级风） ========== */
+:root {
+    --ink: #0f172a;
+    --accent: #2563eb;
+    --accent-soft: #eef4ff;
+    --bg: #f6f7f9;
+    --card: #ffffff;
+    --border: #e8eaee;
+    --text: #1a1d24;
+    --text-muted: #8a919c;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- 顶部导航 ---------- */
+.navbar {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.navbar .logo {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar .logo::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+}
+
+.navbar .logo span {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+}
+
+.navbar .nav-links {
+    display: flex;
+    align-items: center;
+}
+
+.navbar .nav-links a {
+    color: var(--text-muted);
+    text-decoration: none;
+    margin-left: 28px;
+    font-size: 14px;
+    padding: 6px 2px;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+}
+
+.navbar .nav-links #nav-user-area {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.navbar .nav-links a:hover {
+    color: var(--ink);
+}
+
+.navbar .nav-links a.active {
+    color: var(--ink);
+    font-weight: 600;
+    border-bottom-color: var(--accent);
+}
+
+.navbar .nav-user {
+    color: var(--ink);
+    font-size: 14px;
+    margin-left: 28px;
+    font-weight: 500;
+}
+
+/* ---------- 页面主体 ---------- */
+.container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+}
+
+.page-title {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--ink);
+    margin-bottom: 8px;
+}
+
+.page-subtitle {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 32px;
+}
+
+/* ---------- 卡片 ---------- */
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+/* ---------- 步骤指示器 ---------- */
+.steps-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 36px;
+    padding: 0 20px;
+}
+
+.step-dot {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.step-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    flex-shrink: 0;
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
+    border: 2px solid var(--border);
+    color: var(--text-muted);
+    background: var(--card);
+}
+
+.step-circle.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+
+.step-circle.done {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.step-line {
+    width: 60px;
+    height: 2px;
+    background: var(--border);
+    transition: background 0.3s;
+}
+
+.step-line.done {
+    background: var(--accent);
+}
+
+.step-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 6px;
+    max-width: 80px;
+    line-height: 1.3;
+}
+
+.step-label.active {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.step-label.done {
+    color: var(--ink);
+}
+
+.step-dot-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* ---------- 步骤内容 ---------- */
+.step-content {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.step-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.step-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 4px;
+}
+
+.step-subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+}
+
+/* ---------- 表单 ---------- */
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-end;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+
+.form-group input,
+.form-group select {
+    height: 42px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    background: var(--card);
+    transition: border-color 0.2s;
+    min-width: 160px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--accent);
+}
+
+/* ---------- 按钮 ---------- */
+.btn {
+    height: 42px;
+    padding: 0 28px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    background: var(--ink);
+    color: #fff;
+    letter-spacing: 0.5px;
+    transition: background 0.2s, opacity 0.2s;
+}
+
+.btn:hover {
+    background: #1e293b;
+}
+
+.btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.btn-block {
+    width: 100%;
+}
+
+.btn-sm {
+    height: 34px;
+    padding: 0 16px;
+    font-size: 13px;
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+}
+
+.btn-ghost:hover {
+    background: var(--bg);
+    color: var(--ink);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+}
+
+.btn-outline:hover {
+    background: var(--accent-soft);
+}
+
+.btn-danger {
+    background: transparent;
+    border: 1px solid #fca5a5;
+    color: #dc2626;
+}
+
+.btn-danger:hover {
+    background: #fef2f2;
+}
+
+/* ---------- 步骤导航按钮 ---------- */
+.step-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+
+/* ---------- 城市行 ---------- */
+.city-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px dashed var(--border);
+}
+
+.city-row:last-child {
+    border-bottom: none;
+}
+
+.city-row select,
+.city-row input {
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    background: var(--card);
+}
+
+.city-row .city-province { width: 150px; }
+.city-row .city-city { width: 150px; }
+.city-row .city-days { width: 130px; }
+
+/* ---------- 表格 ---------- */
+.table-wrap {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.table th {
+    text-align: left;
+    padding: 10px 14px;
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+    background: #fafbfc;
+    white-space: nowrap;
+}
+
+.table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    white-space: nowrap;
+}
+
+.table tbody tr:hover {
+    background: #fafbfc;
+}
+
+.table tbody tr.selected {
+    background: var(--accent-soft);
+}
+
+/* ---------- 徽章 ---------- */
+.badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.badge-train {
+    background: #eef4ff;
+    color: #2563eb;
+}
+
+.badge-flight {
+    background: #f3e8ff;
+    color: #7c3aed;
+}
+
+.badge-transfer {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.badge-selfdrive {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.badge-hotel {
+    background: #f3e8ff;
+    color: #7c3aed;
+}
+
+.badge-return {
+    background: #fffbeb;
+    color: #d97706;
+}
+
+/* ---------- 弹窗 ---------- */
+.modal-mask {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal {
+    background: var(--card);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 800px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* ---------- 加载与空状态 ---------- */
+.loading {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 48px 0;
+    font-size: 14px;
+}
+
+.empty {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 72px 0;
+    font-size: 14px;
+}
+
+/* ---------- 提示 ---------- */
+.hint {
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+/* ---------- 确认摘要 ---------- */
+.confirm-section {
+    margin-bottom: 20px;
+}
+
+.confirm-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.confirm-section-title .icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #fff;
+    background: var(--accent);
+}
+
+.confirm-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: #fafbfc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.confirm-item .label {
+    color: var(--text-muted);
+}
+
+.confirm-item .value {
+    font-weight: 500;
+    color: var(--text);
+}
+
+.confirm-item .price {
+    color: #e07b39;
+    font-weight: 600;
+}
+
+.confirm-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 14px;
+    background: var(--ink);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 12px;
+}
+
+.confirm-total .total-price {
+    font-size: 22px;
+    color: #fbbf24;
+}
+
+/* ---------- 路线概览 ---------- */
+.route-overview {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 16px 20px;
+    background: var(--accent-soft);
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.route-overview .route-city {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--ink);
+}
+
+.route-overview .route-arrow {
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+/* ---------- 行程结果 ---------- */
+.plan-summary {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+}
+
+.plan-summary .stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    text-align: center;
+    flex: 1;
+    min-width: 120px;
+}
+
+.plan-summary .stat .num {
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.plan-summary .stat .label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 6px;
+    letter-spacing: 0.5px;
+}
+
+.day-plan {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.day-plan .day-header {
+    padding: 14px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    background: #fafbfc;
+}
+
+.day-plan .day-title {
+    font-weight: 600;
+    color: var(--ink);
+    font-size: 15px;
+}
+
+.day-plan .day-meta {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.day-plan .day-spots {
+    padding: 20px 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+/* ---------- 时间段时间线 ---------- */
+.timeline {
+    padding: 20px 24px;
+}
+
+.timeline-item {
+    display: flex;
+    gap: 16px;
+    position: relative;
+    padding-bottom: 18px;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-item::before {
+    content: "";
+    position: absolute;
+    left: 52px;
+    top: 26px;
+    bottom: 0;
+    width: 1px;
+    background: var(--border);
+}
+
+.timeline-item:last-child::before {
+    display: none;
+}
+
+.timeline-time {
+    width: 44px;
+    text-align: right;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.4;
+    flex-shrink: 0;
+}
+
+.timeline-time span {
+    font-weight: 400;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.timeline-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-top: 5px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.timeline-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.slot-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.6;
+}
+
+.slot-title .badge {
+    margin-right: 6px;
+    vertical-align: 1px;
+}
+
+.slot-note {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    line-height: 1.6;
+}
+
+.slot-spot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* ---------- 城市段行程 ---------- */
+.city-plan {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 24px;
+    overflow: hidden;
+}
+
+.city-header {
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--ink);
+}
+
+.city-header .city-name {
+    font-size: 17px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.city-header .city-meta {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.city-info {
+    padding: 10px 24px;
+    font-size: 13px;
+    color: var(--text);
+    background: #fafbfc;
+    border-bottom: 1px solid var(--border);
+}
+
+/* ---------- 选项卡 ---------- */
+.tab-bar {
+    display: flex;
+    gap: 0;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.tab-btn {
+    padding: 10px 20px;
+    font-size: 13px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+    font-weight: 500;
+}
+
+.tab-btn:hover {
+    color: var(--ink);
+}
+
+.tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+/* ---------- 复选框样式 ---------- */
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text);
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--accent);
+}
+
+/* ---------- 中转方案 ---------- */
+.transfer-plan {
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    background: #fafbfc;
+}
+
+.transfer-plan .transfer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.transfer-plan .transfer-legs {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.8;
+}
+
+.transfer-plan .transfer-price {
+    font-size: 16px;
+    font-weight: 600;
+    color: #e07b39;
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 768px) {
+    .steps-indicator {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    .step-line {
+        width: 30px;
+    }
+    .step-label {
+        font-size: 10px;
+        max-width: 60px;
+    }
+    .city-row select,
+    .city-row input {
+        width: 100% !important;
+    }
+    .container {
+        padding: 24px 16px 60px;
+    }
+    .navbar {
+        padding: 0 16px;
+    }
+}
+
+/* ---------- 卡片标题 ---------- */
+.card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 4px;
+}
+
+.card-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 18px;
+}
+
+.text-muted {
+    color: #8a919c;
+    font-size: 12px;
+}
+
+/* ---------- 自驾按钮 ---------- */
+.self-drive-section {
+    text-align: center;
+    padding: 20px;
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    margin-top: 16px;
+}
+
+.self-drive-section p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
+/* ---------- 无酒店选项 ---------- */
+.no-hotel-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px;
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 12px;
+}
+
+.no-hotel-option:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.no-hotel-option.selected {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 500;
+}
+
+/* ---------- 已选指示 ---------- */
+.selection-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* ---------- 结果页重新规划 ---------- */
+.result-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    justify-content: center;
+}
+</style>
+</head>
+<body>
+
+    <!-- 顶部导航 -->
+    <nav class="navbar">
+        <div class="logo">旅游规划系统<span>Travel Planner</span></div>
+        <div class="nav-links">
+            <a href="index.html">首页</a>
+            <a href="plan-wizard.html" class="active">行程向导</a>
+            <a href="plan.html">经典规划</a>
+            <span id="nav-user-area" style="display:none;">
+                <span id="nav-user-name" class="nav-user"></span>
+                <a href="#" id="nav-logout">退出</a>
+            </span>
+            <a href="login.html" id="nav-login" style="display: inline;">登录</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1 class="page-title">智能行程向导</h1>
+        <p class="page-subtitle">分步选择出发城市、目的地、交通和住宿，系统自动生成完整行程</p>
+
+        <!-- 步骤指示器 -->
+        <div class="steps-indicator" id="steps-indicator"></div>
+
+        <!-- ===== Step 1: 基础信息 ===== -->
+        <div class="step-content active" id="step-1" data-step="1">
+            <div class="card">
+                <div class="step-title">行程基础信息</div>
+                <div class="step-subtitle">请填写出发城市、目的地和日期范围</div>
+
+                <div class="form-row" style="margin-bottom:20px;">
+                    <div class="form-group">
+                        <label>出发省份</label>
+                        <select id="origin-province"><option value="">请选择省份</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>出发城市</label>
+                        <select id="origin-city"><option value="">请选择城市</option></select>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <label style="font-size:12px;color:var(--text-muted);letter-spacing:.5px;">游玩城市</label>
+                        <button class="btn btn-sm" id="btn-add-city" type="button">+ 添加城市</button>
+                    </div>
+                    <div id="city-rows"></div>
+                </div>
+
+                <div class="form-row" style="margin-bottom:16px;">
+                    <div class="form-group">
+                        <label>开始日期</label>
+                        <input type="date" id="start-date">
+                    </div>
+                    <div class="form-group">
+                        <label>结束日期</label>
+                        <input type="date" id="end-date">
+                    </div>
+                </div>
+
+                <div class="checkbox-group" style="margin-bottom:4px;">
+                    <input type="checkbox" id="return-checkbox" checked>
+                    <label for="return-checkbox" style="cursor:pointer;font-size:14px;color:var(--text);">行程结束后返回出发城市</label>
+                </div>
+
+                <div class="step-nav">
+                    <div></div>
+                    <button class="btn" id="step1-next" disabled>下一步</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Step 2+: 交通选择（每对城市一个步骤） ===== -->
+        <div id="transport-steps-container"></div>
+
+        <!-- ===== Step 3+: 酒店选择（每个城市一个步骤） ===== -->
+        <div id="hotel-steps-container"></div>
+
+        <!-- ===== 最终步骤: 确认 ===== -->
+        <div class="step-content" id="step-confirm" data-step="confirm">
+            <div class="card">
+                <div class="step-title">确认行程</div>
+                <div class="step-subtitle">请仔细核对您的行程安排，确认无误后生成完整规划</div>
+
+                <div id="confirm-content"></div>
+
+                <div class="step-nav">
+                    <button class="btn btn-ghost" id="confirm-prev">上一步</button>
+                    <button class="btn" id="btn-generate">生成行程</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 加载中 ===== -->
+        <div class="loading" id="plan-loading" style="display:none;">
+            <div style="margin-bottom:12px;">正在为你生成行程计划...</div>
+            <div style="font-size:12px;color:var(--text-muted);">系统正在根据你的选择智能规划每日安排</div>
+        </div>
+
+        <!-- ===== 结果展示 ===== -->
+        <div id="result-section" style="display:none;">
+            <div id="plan-result"></div>
+            <div class="result-actions">
+                <button class="btn btn-ghost" id="btn-back-to-wizard">返回修改</button>
+                <button class="btn" id="btn-new-plan">重新规划</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ===== 交通选择弹窗 ===== -->
+    <div class="modal-mask" id="transport-modal" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <span id="transport-modal-title">选择交通方式</span>
+                <button type="button" class="btn btn-sm btn-ghost" onclick="closeTransportModal()">关闭</button>
+            </div>
+            <div class="modal-body">
+                <div class="tab-bar">
+                    <button class="tab-btn active" data-tab="train" onclick="switchTransportTab('train')">火车</button>
+                    <button class="tab-btn" data-tab="flight" onclick="switchTransportTab('flight')">航班</button>
+                    <button class="tab-btn" data-tab="transfer" onclick="switchTransportTab('transfer')">中转方案</button>
+                </div>
+                <div id="transport-list">
+                    <div class="loading" style="padding:24px 0;">正在查询...</div>
+                </div>
+                <div class="self-drive-section">
+                    <p>或者选择自驾出行</p>
+                    <button class="btn btn-outline" id="btn-choose-selfdrive">选择自驾</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 酒店选择弹窗 ===== -->
+    <div class="modal-mask" id="hotel-modal" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <span id="hotel-modal-title">选择住宿</span>
+                <button type="button" class="btn btn-sm btn-ghost" onclick="closeHotelModal()">关闭</button>
+            </div>
+            <div class="modal-body">
+                <div id="hotel-list">
+                    <div class="loading" style="padding:24px 0;">正在查询...</div>
+                </div>
+                <div class="no-hotel-option" id="no-hotel-option" onclick="chooseNoHotel()">
+                    <span style="font-size:18px;">&#10005;</span> 不安排酒店住宿
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== 配置 =====
+        var BASE = 'http://localhost:8080';
+        var currentUser = null;
+        try {
+            currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+        } catch (e) {
+            currentUser = null;
+        }
+
+        var allCities = [];
+        var wizardData = {
+            originProvince: '',
+            originCity: '',
+            cities: [],          // { province, cityName, days }
+            startDate: '',
+            endDate: '',
+            returnToOrigin: true,
+            transportSelections: [],  // { from, to, type, scheduleNo, departTime, arriveTime, price, transfer }
+            hotelSelections: []       // { city, hotelId, hotelName, hotelPrice, noHotel }
+        };
+
+        // 当前步骤索引（从0开始）
+        var currentStep = 0;
+        // 所有步骤的标识
+        var stepKeys = [];
+        // 当前弹窗目标
+        var modalTarget = null;
+
+        // ===== API 工具 =====
+        function api(url, options) {
+            options = options || {};
+            options.headers = options.headers || {};
+            var token = localStorage.getItem('token');
+            if (token) {
+                options.headers['Authorization'] = 'Bearer ' + token;
+            }
+            return fetch(BASE + url, options).then(function (res) { return res.json(); });
+        }
+
+        function unique(arr) {
+            var seen = {}, out = [];
+            for (var i = 0; i < arr.length; i++) {
+                if (arr[i] && !seen[arr[i]]) { seen[arr[i]] = 1; out.push(arr[i]); }
+            }
+            return out;
+        }
+
+        function esc(s) {
+            if (s === null || s === undefined) return '';
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        // ===== 导航栏 =====
+        function renderNav() {
+            var userArea = document.getElementById('nav-user-area');
+            var loginLink = document.getElementById('nav-login');
+            if (currentUser) {
+                userArea.style.display = 'inline-flex';
+                loginLink.style.display = 'none';
+                document.getElementById('nav-user-name').textContent =
+                    '你好，' + (currentUser.nickname || currentUser.username);
+            } else {
+                userArea.style.display = 'none';
+                loginLink.style.display = 'inline';
+            }
+        }
+
+        document.getElementById('nav-logout').addEventListener('click', function (e) {
+            e.preventDefault();
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            currentUser = null;
+            renderNav();
+        });
+
+        // ===== 省份/城市填充 =====
+        function populateProvince(select) {
+            var provinces = unique(allCities.map(function (c) { return c.province; })).sort();
+            select.innerHTML = '<option value="">请选择省份</option>';
+            for (var i = 0; i < provinces.length; i++) {
+                var opt = document.createElement('option');
+                opt.value = provinces[i];
+                opt.textContent = provinces[i];
+                select.appendChild(opt);
+            }
+        }
+
+        function populateCity(province, citySelect) {
+            citySelect.innerHTML = '<option value="">请选择城市</option>';
+            if (!province) return;
+            var cities = allCities.filter(function (c) { return c.province === province; })
+                .map(function (c) { return c.cityName; }).sort();
+            for (var i = 0; i < cities.length; i++) {
+                var opt = document.createElement('option');
+                opt.value = cities[i];
+                opt.textContent = cities[i];
+                citySelect.appendChild(opt);
+            }
+        }
+
+        // ===== 步骤指示器 =====
+        function buildSteps() {
+            // 收集所有步骤
+            stepKeys = ['basic'];
+            var destCities = getDestCityNames();
+            var cityPairs = getCityPairs();
+            for (var i = 0; i < cityPairs.length; i++) {
+                stepKeys.push('transport_' + i);
+            }
+            for (var i = 0; i < destCities.length; i++) {
+                stepKeys.push('hotel_' + i);
+            }
+            stepKeys.push('confirm');
+
+            renderSteps();
+        }
+
+        function getStepLabel(key) {
+            if (key === 'basic') return '基础信息';
+            if (key === 'confirm') return '确认行程';
+            if (key.indexOf('transport_') === 0) return '交通 ' + (parseInt(key.split('_')[1]) + 1);
+            if (key.indexOf('hotel_') === 0) return '住宿 ' + (parseInt(key.split('_')[1]) + 1);
+            return key;
+        }
+
+        function renderSteps() {
+            var container = document.getElementById('steps-indicator');
+            var html = '';
+            for (var i = 0; i < stepKeys.length; i++) {
+                if (i > 0) {
+                    var lineClass = (i <= currentStep) ? 'step-line done' : 'step-line';
+                    html += '<div class="' + lineClass + '"></div>';
+                }
+                var circleClass = 'step-circle';
+                var labelClass = 'step-label';
+                if (i === currentStep) {
+                    circleClass += ' active';
+                    labelClass += ' active';
+                } else if (i < currentStep) {
+                    circleClass += ' done';
+                    labelClass += ' done';
+                }
+                var label = getStepLabel(stepKeys[i]);
+                html += '<div class="step-dot-wrap">' +
+                    '<div class="' + circleClass + '">' + (i < currentStep ? '&#10003;' : (i + 1)) + '</div>' +
+                    '<div class="' + labelClass + '">' + label + '</div>' +
+                    '</div>';
+            }
+            container.innerHTML = html;
+        }
+
+        function getDestCityNames() {
+            var names = [];
+            var rows = document.querySelectorAll('#city-rows .city-row');
+            for (var i = 0; i < rows.length; i++) {
+                var city = rows[i].querySelector('.city-city').value;
+                if (city) names.push(city);
+            }
+            return names;
+        }
+
+        function getCityPairs() {
+            var origin = document.getElementById('origin-city').value;
+            var destCities = getDestCityNames();
+            var pairs = [];
+            for (var i = 0; i < destCities.length; i++) {
+                var from = (i === 0) ? origin : destCities[i - 1];
+                var to = destCities[i];
+                pairs.push({ from: from, to: to });
+            }
+            var returnCb = document.getElementById('return-checkbox');
+            if (returnCb.checked && destCities.length > 0) {
+                var last = destCities[destCities.length - 1];
+                if (last !== origin) {
+                    pairs.push({ from: last, to: origin, isReturn: true });
+                }
+            }
+            return pairs;
+        }
+
+        // ===== 步骤导航 =====
+        function goToStep(index) {
+            // 验证当前步骤
+            if (!validateCurrentStep() && index > currentStep) {
+                return;
+            }
+
+            // 保存当前步骤数据
+            saveCurrentStepData();
+
+            currentStep = index;
+            showCurrentStep();
+            renderSteps();
+        }
+
+        function goNext() {
+            if (!validateCurrentStep()) return;
+            saveCurrentStepData();
+            if (currentStep < stepKeys.length - 1) {
+                currentStep++;
+                // 初始化新步骤
+                initCurrentStep();
+                showCurrentStep();
+                renderSteps();
+            }
+        }
+
+        function goPrev() {
+            if (currentStep > 0) {
+                currentStep--;
+                showCurrentStep();
+                renderSteps();
+            }
+        }
+
+        function showCurrentStep() {
+            // 隐藏所有步骤
+            var allSteps = document.querySelectorAll('.step-content');
+            for (var i = 0; i < allSteps.length; i++) {
+                allSteps[i].classList.remove('active');
+            }
+
+            var key = stepKeys[currentStep];
+            if (key === 'basic') {
+                document.getElementById('step-1').classList.add('active');
+            } else if (key === 'confirm') {
+                document.getElementById('step-confirm').classList.add('active');
+                renderConfirm();
+            } else if (key.indexOf('transport_') === 0) {
+                var idx = parseInt(key.split('_')[1]);
+                var el = document.getElementById('transport-step-' + idx);
+                if (el) el.classList.add('active');
+            } else if (key.indexOf('hotel_') === 0) {
+                var idx = parseInt(key.split('_')[1]);
+                var el = document.getElementById('hotel-step-' + idx);
+                if (el) el.classList.add('active');
+            }
+
+            // 更新下一步按钮状态
+            updateNextButton();
+        }
+
+        function validateCurrentStep() {
+            var key = stepKeys[currentStep];
+            if (key === 'basic') {
+                return validateStep1();
+            }
+            // 其他步骤总是可以通过（用户可能选择跳过）
+            return true;
+        }
+
+        function saveCurrentStepData() {
+            var key = stepKeys[currentStep];
+            if (key === 'basic') {
+                wizardData.originProvince = document.getElementById('origin-province').value;
+                wizardData.originCity = document.getElementById('origin-city').value;
+                wizardData.startDate = document.getElementById('start-date').value;
+                wizardData.endDate = document.getElementById('end-date').value;
+                wizardData.returnToOrigin = document.getElementById('return-checkbox').checked;
+
+                var destCities = [];
+                var rows = document.querySelectorAll('#city-rows .city-row');
+                for (var i = 0; i < rows.length; i++) {
+                    var prov = rows[i].querySelector('.city-province').value;
+                    var city = rows[i].querySelector('.city-city').value;
+                    var days = rows[i].querySelector('.city-days').value;
+                    destCities.push({
+                        province: prov,
+                        cityName: city,
+                        days: days ? parseInt(days, 10) : null
+                    });
+                }
+                wizardData.cities = destCities;
+            }
+        }
+
+        // ===== Step 1 验证 =====
+        function validateStep1() {
+            var origin = document.getElementById('origin-city').value;
+            var start = document.getElementById('start-date').value;
+            var end = document.getElementById('end-date').value;
+            var rows = document.querySelectorAll('#city-rows .city-row');
+            var hasCity = false;
+            for (var i = 0; i < rows.length; i++) {
+                if (rows[i].querySelector('.city-city').value) {
+                    hasCity = true;
+                    break;
+                }
+            }
+            return origin && start && end && hasCity;
+        }
+
+        function updateNextButton() {
+            var btn = document.getElementById('step1-next');
+            if (btn) {
+                btn.disabled = !validateStep1();
+            }
+        }
+
+        // ===== Step 1 事件绑定 =====
+        function initStep1() {
+            var originProv = document.getElementById('origin-province');
+            var originCity = document.getElementById('origin-city');
+
+            populateProvince(originProv);
+
+            originProv.addEventListener('change', function () {
+                populateCity(originProv.value, originCity);
+                updateNextButton();
+            });
+
+            originCity.addEventListener('change', function () {
+                updateNextButton();
+                // 交通段可能变化，重建步骤
+            });
+
+            document.getElementById('start-date').addEventListener('change', updateNextButton);
+            document.getElementById('end-date').addEventListener('change', updateNextButton);
+            document.getElementById('return-checkbox').addEventListener('change', function () {
+                updateNextButton();
+            });
+
+            document.getElementById('step1-next').addEventListener('click', function () {
+                // 重建步骤（因为城市列表可能变化）
+                buildSteps();
+                // 初始化交通和酒店步骤
+                initTransportSteps();
+                initHotelSteps();
+                goNext();
+            });
+
+            // 监听城市行变化以更新下一步按钮
+            document.getElementById('city-rows').addEventListener('change', function () {
+                updateNextButton();
+            });
+
+            // 添加城市按钮
+            document.getElementById('btn-add-city').addEventListener('click', function () {
+                addCityRow();
+                updateNextButton();
+            });
+        }
+
+        function addCityRow() {
+            var wrap = document.getElementById('city-rows');
+            var row = document.createElement('div');
+            row.className = 'city-row';
+            row.innerHTML =
+                '<select class="city-province"></select>' +
+                '<select class="city-city"></select>' +
+                '<input type="number" class="city-days" min="1" max="30" placeholder="停留天数(可空)">' +
+                '<button type="button" class="btn btn-sm btn-danger btn-remove-city">删除</button>';
+            wrap.appendChild(row);
+
+            var provSel = row.querySelector('.city-province');
+            var citySel = row.querySelector('.city-city');
+            populateProvince(provSel);
+
+            provSel.addEventListener('change', function () {
+                populateCity(provSel.value, citySel);
+            });
+
+            row.querySelector('.btn-remove-city').addEventListener('click', function () {
+                row.remove();
+                updateNextButton();
+            });
+        }
+
+        // ===== 交通步骤 =====
+        function initTransportSteps() {
+            var container = document.getElementById('transport-steps-container');
+            container.innerHTML = '';
+
+            var pairs = getCityPairs();
+            wizardData.transportSelections = [];
+            for (var i = 0; i < pairs.length; i++) {
+                var p = pairs[i];
+                wizardData.transportSelections.push({
+                    from: p.from,
+                    to: p.to,
+                    isReturn: p.isReturn || false,
+                    type: null,
+                    scheduleNo: null,
+                    departTime: null,
+                    arriveTime: null,
+                    price: 0,
+                    selected: false,
+                    isSelfDrive: false
+                });
+
+                var stepDiv = document.createElement('div');
+                stepDiv.className = 'step-content';
+                stepDiv.id = 'transport-step-' + i;
+                stepDiv.dataset.step = 'transport_' + i;
+
+                var title = p.isReturn ? '返程' : '交通';
+                var subtitle = '从 ' + p.from + ' 到 ' + p.to;
+
+                stepDiv.innerHTML =
+                    '<div class="card">' +
+                        '<div class="step-title">' + title + '</div>' +
+                        '<div class="step-subtitle">选择交通方式：从 ' + esc(p.from) + ' 到 ' + esc(p.to) + '</div>' +
+                        '<div id="transport-selection-' + i + '">' +
+                            '<div class="tab-bar">' +
+                                '<button class="tab-btn active" data-tab="train" onclick="loadTransportTab(' + i + ', \'train\')">火车</button>' +
+                                '<button class="tab-btn" data-tab="flight" onclick="loadTransportTab(' + i + ', \'flight\')">航班</button>' +
+                                '<button class="tab-btn" data-tab="transfer" onclick="loadTransportTab(' + i + ', \'transfer\')">中转方案</button>' +
+                            '</div>' +
+                            '<div class="table-wrap" id="transport-table-' + i + '">' +
+                                '<div class="loading" style="padding:24px 0;">点击上方选项卡查询交通信息</div>' +
+                            '</div>' +
+                            '<div class="self-drive-section">' +
+                                '<p>或者选择自驾出行</p>' +
+                                '<button class="btn btn-outline" onclick="chooseSelfDrive(' + i + ')">选择自驾</button>' +
+                            '</div>' +
+                            '<div id="transport-selected-' + i + '" style="margin-top:12px;display:none;"></div>' +
+                        '</div>' +
+                        '<div class="step-nav">' +
+                            '<button class="btn btn-ghost" onclick="goPrev()">上一步</button>' +
+                            '<button class="btn" onclick="goNext()">下一步</button>' +
+                        '</div>' +
+                    '</div>';
+
+                container.appendChild(stepDiv);
+            }
+        }
+
+        // 加载交通选项卡
+        window.loadTransportTab = function (index, tab) {
+            var p = wizardData.transportSelections[index];
+            if (!p) return;
+
+            // 更新tab按钮样式
+            var container = document.getElementById('transport-step-' + index);
+            var tabBtns = container.querySelectorAll('.tab-btn');
+            for (var i = 0; i < tabBtns.length; i++) {
+                tabBtns[i].classList.remove('active');
+                if (tabBtns[i].dataset.tab === tab) {
+                    tabBtns[i].classList.add('active');
+                }
+            }
+
+            var tableDiv = document.getElementById('transport-table-' + index);
+
+            if (tab === 'transfer') {
+                // 查询中转方案
+                tableDiv.innerHTML = '<div class="loading" style="padding:24px 0;">正在查询中转方案...</div>';
+                Promise.all([
+                    api('/api/train/transfer?from=' + encodeURIComponent(p.from) + '&to=' + encodeURIComponent(p.to)),
+                    api('/api/flight/transfer?from=' + encodeURIComponent(p.from) + '&to=' + encodeURIComponent(p.to))
+                ]).then(function (arr) {
+                    var list = [];
+                    if (arr[0].code === 200) list = list.concat(arr[0].data);
+                    if (arr[1].code === 200) list = list.concat(arr[1].data);
+                    list.sort(function (a, b) { return a.totalPrice - b.totalPrice; });
+                    renderTransferOptions(index, list);
+                }).catch(function () {
+                    tableDiv.innerHTML = '<div class="empty" style="padding:24px 0;">查询失败</div>';
+                });
+            } else {
+                // 查询火车或航班
+                var endpoint = tab === 'train' ? '/api/train/search' : '/api/flight/search';
+                tableDiv.innerHTML = '<div class="loading" style="padding:24px 0;">正在查询...</div>';
+                api(endpoint + '?from=' + encodeURIComponent(p.from) + '&to=' + encodeURIComponent(p.to))
+                    .then(function (res) {
+                        if (res.code === 200 && res.data && res.data.length > 0) {
+                            renderTransportOptions(index, tab, res.data);
+                        } else {
+                            tableDiv.innerHTML = '<div class="empty" style="padding:24px 0;">没有找到直达' + (tab === 'train' ? '火车' : '航班') + '，试试中转方案</div>';
+                        }
+                    }).catch(function () {
+                        tableDiv.innerHTML = '<div class="empty" style="padding:24px 0;">查询失败</div>';
+                    });
+            }
+        };
+
+        function renderTransportOptions(index, type, data) {
+            var tableDiv = document.getElementById('transport-table-' + index);
+            var isTrain = type === 'train';
+            var html = '<table class="table"><thead><tr>' +
+                '<th>' + (isTrain ? '车次号' : '航班号') + '</th>' +
+                '<th>' + (isTrain ? '类型' : '航司') + '</th>' +
+                '<th>出发时间</th><th>到达时间</th><th>票价</th><th>操作</th>' +
+                '</tr></thead><tbody>';
+
+            for (var i = 0; i < data.length; i++) {
+                var item = data[i];
+                var no = isTrain ? item.trainNo : item.flightNo;
+                var sub = isTrain ? (item.trainType || '') : (item.airline || '');
+                var price = item.price || 0;
+                var isSelected = wizardData.transportSelections[index] &&
+                    wizardData.transportSelections[index].scheduleNo === no &&
+                    wizardData.transportSelections[index].type === type;
+
+                html += '<tr' + (isSelected ? ' class="selected"' : '') + '>' +
+                    '<td><span class="badge ' + (isTrain ? 'badge-train' : 'badge-flight') + '">' + esc(no) + '</span></td>' +
+                    '<td>' + esc(sub) + '</td>' +
+                    '<td>' + esc(item.departTime) + '</td>' +
+                    '<td>' + esc(item.arriveTime) + '</td>' +
+                    '<td>¥' + price + '</td>' +
+                    '<td><button class="btn btn-sm' + (isSelected ? ' btn-ghost' : '') + '" onclick="chooseTransport(' + index + ',\'' + type + '\',\'' + esc(no) + '\',\'' + esc(item.departTime) + '\',\'' + esc(item.arriveTime) + '\',' + price + ')">' +
+                    (isSelected ? '已选择' : '选择') + '</button></td>' +
+                    '</tr>';
+            }
+            html += '</tbody></table>';
+            tableDiv.innerHTML = html;
+        }
+
+        function renderTransferOptions(index, plans) {
+            var tableDiv = document.getElementById('transport-table-' + index);
+            if (!plans || plans.length === 0) {
+                tableDiv.innerHTML = '<div class="empty" style="padding:24px 0;">未找到中转方案</div>';
+                return;
+            }
+
+            var html = '<div style="margin-bottom:8px;font-weight:600;font-size:14px;color:var(--ink);">中转方案（共 ' + plans.length + ' 种）</div>';
+            html += '<table class="table"><thead><tr>' +
+                '<th>中转城市</th><th>第一段</th><th>第二段</th><th>总价</th><th>总耗时</th><th>操作</th>' +
+                '</tr></thead><tbody>';
+
+            for (var i = 0; i < plans.length; i++) {
+                var p = plans[i];
+                var isSelected = wizardData.transportSelections[index] &&
+                    wizardData.transportSelections[index].scheduleNo === (p.firstLeg + ',' + p.secondLeg);
+
+                html += '<tr' + (isSelected ? ' class="selected"' : '') + '>' +
+                    '<td><span class="badge badge-transfer">' + esc(p.transferCity) + '</span></td>' +
+                    '<td style="font-size:12px;">' + esc(p.firstLeg) + '<br><span class="text-muted">' + esc(p.firstFrom) + '→' + esc(p.firstTo) + ' ' + p.firstDepart + '-' + p.firstArrive + '</span></td>' +
+                    '<td style="font-size:12px;">' + esc(p.secondLeg) + '<br><span class="text-muted">' + esc(p.secondFrom) + '→' + esc(p.secondTo) + ' ' + p.secondDepart + '-' + p.secondArrive + '</span></td>' +
+                    '<td><strong>¥' + p.totalPrice + '</strong></td>' +
+                    '<td>' + Math.floor(p.totalMinutes / 60) + 'h' + (p.totalMinutes % 60) + 'min</td>' +
+                    '<td><button class="btn btn-sm' + (isSelected ? ' btn-ghost' : '') + '" onclick="chooseTransfer(' + index + ',\'' + esc(p.firstLeg) + '\',\'' + esc(p.secondLeg) + '\',\'' + esc(p.firstFrom) + '\',\'' + esc(p.firstTo) + '\',\'' + esc(p.secondFrom) + '\',\'' + esc(p.secondTo) + '\',\'' + p.firstDepart + '\',\'' + p.firstArrive + '\',\'' + p.secondDepart + '\',\'' + p.secondArrive + '\',' + p.totalPrice + ')">' +
+                    (isSelected ? '已选择' : '选择此方案') + '</button></td>' +
+                    '</tr>';
+            }
+            html += '</tbody></table>';
+            tableDiv.innerHTML = html;
+        }
+
+        // 选择直达交通
+        window.chooseTransport = function (index, type, scheduleNo, departTime, arriveTime, price) {
+            wizardData.transportSelections[index].type = type;
+            wizardData.transportSelections[index].scheduleNo = scheduleNo;
+            wizardData.transportSelections[index].departTime = departTime;
+            wizardData.transportSelections[index].arriveTime = arriveTime;
+            wizardData.transportSelections[index].price = price;
+            wizardData.transportSelections[index].selected = true;
+            wizardData.transportSelections[index].isSelfDrive = false;
+            wizardData.transportSelections[index].isTransfer = false;
+            updateTransportSelectionDisplay(index);
+            // 重新渲染表格以更新选中状态
+            var activeTab = document.querySelector('#transport-step-' + index + ' .tab-btn.active');
+            if (activeTab) {
+                loadTransportTab(index, activeTab.dataset.tab);
+            }
+        };
+
+        // 选择中转方案
+        window.chooseTransfer = function (index, firstLeg, secondLeg, firstFrom, firstTo, secondFrom, secondTo, firstDepart, firstArrive, secondDepart, secondArrive, totalPrice) {
+            wizardData.transportSelections[index].type = 'transfer';
+            wizardData.transportSelections[index].scheduleNo = firstLeg + ',' + secondLeg;
+            wizardData.transportSelections[index].departTime = firstDepart;
+            wizardData.transportSelections[index].arriveTime = secondArrive;
+            wizardData.transportSelections[index].price = totalPrice;
+            wizardData.transportSelections[index].selected = true;
+            wizardData.transportSelections[index].isSelfDrive = false;
+            wizardData.transportSelections[index].isTransfer = true;
+            wizardData.transportSelections[index].transferDetail = {
+                firstLeg: firstLeg, secondLeg: secondLeg,
+                firstFrom: firstFrom, firstTo: firstTo,
+                secondFrom: secondFrom, secondTo: secondTo,
+                firstDepart: firstDepart, firstArrive: firstArrive,
+                secondDepart: secondDepart, secondArrive: secondArrive
+            };
+            updateTransportSelectionDisplay(index);
+            var activeTab = document.querySelector('#transport-step-' + index + ' .tab-btn.active');
+            if (activeTab) {
+                loadTransportTab(index, activeTab.dataset.tab);
+            }
+        };
+
+        // 选择自驾
+        window.chooseSelfDrive = function (index) {
+            wizardData.transportSelections[index].type = 'self-drive';
+            wizardData.transportSelections[index].scheduleNo = '自驾';
+            wizardData.transportSelections[index].departTime = null;
+            wizardData.transportSelections[index].arriveTime = null;
+            wizardData.transportSelections[index].price = 0;
+            wizardData.transportSelections[index].selected = true;
+            wizardData.transportSelections[index].isSelfDrive = true;
+            wizardData.transportSelections[index].isTransfer = false;
+            updateTransportSelectionDisplay(index);
+        };
+
+        function updateTransportSelectionDisplay(index) {
+            var sel = wizardData.transportSelections[index];
+            var div = document.getElementById('transport-selected-' + index);
+            if (!sel || !sel.selected) {
+                div.style.display = 'none';
+                return;
+            }
+            div.style.display = 'block';
+
+            var label = '';
+            if (sel.isSelfDrive) {
+                label = '<span class="selection-indicator"><span class="badge badge-selfdrive">自驾</span> 已选择自驾出行</span>';
+            } else if (sel.isTransfer) {
+                label = '<span class="selection-indicator"><span class="badge badge-transfer">中转</span> ' +
+                    esc(sel.scheduleNo) + ' ' + esc(sel.transferDetail.firstFrom) + '→' + esc(sel.transferDetail.secondTo) +
+                    ' ' + sel.departTime + '-' + sel.arriveTime + '  ¥' + sel.price + '</span>';
+            } else {
+                var typeName = sel.type === 'train' ? '火车' : '航班';
+                var badgeClass = sel.type === 'train' ? 'badge-train' : 'badge-flight';
+                label = '<span class="selection-indicator"><span class="badge ' + badgeClass + '">' + typeName + '</span> ' +
+                    esc(sel.scheduleNo) + ' ' + sel.departTime + '→' + sel.arriveTime + '  ¥' + sel.price + '</span>';
+            }
+            div.innerHTML = label;
+        }
+
+        // ===== 酒店步骤 =====
+        function initHotelSteps() {
+            var container = document.getElementById('hotel-steps-container');
+            container.innerHTML = '';
+
+            var destCities = getDestCityNames();
+            wizardData.hotelSelections = [];
+            for (var i = 0; i < destCities.length; i++) {
+                wizardData.hotelSelections.push({
+                    city: destCities[i],
+                    hotelId: null,
+                    hotelName: null,
+                    hotelPrice: 0,
+                    noHotel: false
+                });
+
+                var stepDiv = document.createElement('div');
+                stepDiv.className = 'step-content';
+                stepDiv.id = 'hotel-step-' + i;
+                stepDiv.dataset.step = 'hotel_' + i;
+
+                stepDiv.innerHTML =
+                    '<div class="card">' +
+                        '<div class="step-title">选择住宿</div>' +
+                        '<div class="step-subtitle">为 ' + esc(destCities[i]) + ' 选择住宿</div>' +
+                        '<div id="hotel-selection-' + i + '">' +
+                            '<div class="table-wrap" id="hotel-table-' + i + '">' +
+                                '<div class="loading" style="padding:24px 0;">正在查询酒店...</div>' +
+                            '</div>' +
+                            '<div class="no-hotel-option" id="hotel-no-hotel-' + i + '" onclick="chooseNoHotelForCity(' + i + ')">' +
+                                '<span style="font-size:18px;">&#10005;</span> 不安排酒店住宿' +
+                            '</div>' +
+                            '<div id="hotel-selected-' + i + '" style="margin-top:12px;display:none;"></div>' +
+                        '</div>' +
+                        '<div class="step-nav">' +
+                            '<button class="btn btn-ghost" onclick="goPrev()">上一步</button>' +
+                            '<button class="btn" onclick="goNext()">下一步</button>' +
+                        '</div>' +
+                    '</div>';
+
+                container.appendChild(stepDiv);
+
+                // 加载酒店
+                loadHotelsForCity(i, destCities[i]);
+            }
+        }
+
+        function loadHotelsForCity(index, city) {
+            var tableDiv = document.getElementById('hotel-table-' + index);
+            api('/api/hotel/list?city=' + encodeURIComponent(city))
+                .then(function (res) {
+                    if (res.code === 200 && res.data && res.data.length > 0) {
+                        var html = '<table class="table"><thead><tr>' +
+                            '<th>酒店名</th><th>类型</th><th>价格</th><th>操作</th>' +
+                            '</tr></thead><tbody>';
+                        for (var i = 0; i < res.data.length; i++) {
+                            var h = res.data[i];
+                            var isSelected = wizardData.hotelSelections[index] &&
+                                wizardData.hotelSelections[index].hotelId === h.id &&
+                                !wizardData.hotelSelections[index].noHotel;
+
+                            html += '<tr' + (isSelected ? ' class="selected"' : '') + '>' +
+                                '<td>' + esc(h.name) + '</td>' +
+                                '<td>' + esc(h.type || '') + '</td>' +
+                                '<td>¥' + (h.price || 0) + '</td>' +
+                                '<td><button class="btn btn-sm' + (isSelected ? ' btn-ghost' : '') + '" onclick="chooseHotel(' + index + ',' + h.id + ',\'' + esc(h.name) + '\',' + (h.price || 0) + ')">' +
+                                (isSelected ? '已选择' : '选择') + '</button></td>' +
+                                '</tr>';
+                        }
+                        html += '</tbody></table>';
+                        tableDiv.innerHTML = html;
+                    } else {
+                        tableDiv.innerHTML = '<div class="empty" style="padding:24px 0;">该城市暂无可用酒店</div>';
+                    }
+                }).catch(function () {
+                    tableDiv.innerHTML = '<div class="empty" style="padding:24px 0;">查询酒店失败</div>';
+                });
+        }
+
+        window.chooseHotel = function (index, id, name, price) {
+            wizardData.hotelSelections[index].hotelId = id;
+            wizardData.hotelSelections[index].hotelName = name;
+            wizardData.hotelSelections[index].hotelPrice = price;
+            wizardData.hotelSelections[index].noHotel = false;
+            updateHotelSelectionDisplay(index);
+            // 重新加载表格以更新选中状态
+            loadHotelsForCity(index, wizardData.hotelSelections[index].city);
+
+            // 更新 no-hotel 选项样式
+            var noHotelEl = document.getElementById('hotel-no-hotel-' + index);
+            if (noHotelEl) noHotelEl.classList.remove('selected');
+        };
+
+        window.chooseNoHotelForCity = function (index) {
+            wizardData.hotelSelections[index].hotelId = null;
+            wizardData.hotelSelections[index].hotelName = null;
+            wizardData.hotelSelections[index].hotelPrice = 0;
+            wizardData.hotelSelections[index].noHotel = true;
+            updateHotelSelectionDisplay(index);
+            // 重新加载表格以清除选中状态
+            loadHotelsForCity(index, wizardData.hotelSelections[index].city);
+
+            // 更新 no-hotel 选项样式
+            var noHotelEl = document.getElementById('hotel-no-hotel-' + index);
+            if (noHotelEl) noHotelEl.classList.add('selected');
+        };
+
+        function updateHotelSelectionDisplay(index) {
+            var sel = wizardData.hotelSelections[index];
+            var div = document.getElementById('hotel-selected-' + index);
+            if (!sel) {
+                div.style.display = 'none';
+                return;
+            }
+            if (sel.noHotel) {
+                div.style.display = 'block';
+                div.innerHTML = '<span class="selection-indicator">不安排酒店住宿</span>';
+            } else if (sel.hotelId) {
+                div.style.display = 'block';
+                div.innerHTML = '<span class="selection-indicator"><span class="badge badge-hotel">酒店</span> ' +
+                    esc(sel.hotelName) + '  ¥' + sel.hotelPrice + '</span>';
+            } else {
+                div.style.display = 'none';
+            }
+        }
+
+        // ===== 初始化当前步骤 =====
+        function initCurrentStep() {
+            var key = stepKeys[currentStep];
+            if (key === 'basic') {
+                // 已初始化
+            } else if (key.indexOf('transport_') === 0) {
+                var idx = parseInt(key.split('_')[1]);
+                // 自动加载默认tab
+                var activeTab = document.querySelector('#transport-step-' + idx + ' .tab-btn.active');
+                if (activeTab) {
+                    loadTransportTab(idx, activeTab.dataset.tab);
+                }
+                updateTransportSelectionDisplay(idx);
+            } else if (key.indexOf('hotel_') === 0) {
+                var idx = parseInt(key.split('_')[1]);
+                updateHotelSelectionDisplay(idx);
+            } else if (key === 'confirm') {
+                renderConfirm();
+            }
+        }
+
+        // ===== 确认页面 =====
+        function renderConfirm() {
+            var container = document.getElementById('confirm-content');
+            var origin = wizardData.originCity;
+            var destCities = getDestCityNames();
+            var pairs = getCityPairs();
+
+            var html = '';
+
+            // 路线概览
+            html += '<div class="route-overview">';
+            html += '<span class="route-city">' + esc(origin) + '</span>';
+            for (var i = 0; i < destCities.length; i++) {
+                html += '<span class="route-arrow">&#8594;</span>';
+                html += '<span class="route-city">' + esc(destCities[i]) + '</span>';
+            }
+            if (wizardData.returnToOrigin && destCities.length > 0 && destCities[destCities.length - 1] !== origin) {
+                html += '<span class="route-arrow">&#8594;</span>';
+                html += '<span class="route-city">' + esc(origin) + '</span>';
+            }
+            html += '</div>';
+
+            // 日期信息
+            html += '<div class="confirm-section">';
+            html += '<div class="confirm-section-title"><span class="icon">&#128197;</span> 日期信息</div>';
+            html += '<div class="confirm-item"><span class="label">开始日期</span><span class="value">' + esc(wizardData.startDate) + '</span></div>';
+            html += '<div class="confirm-item"><span class="label">结束日期</span><span class="value">' + esc(wizardData.endDate) + '</span></div>';
+            html += '</div>';
+
+            // 交通信息
+            var totalTransport = 0;
+            html += '<div class="confirm-section">';
+            html += '<div class="confirm-section-title"><span class="icon">&#128652;</span> 交通安排</div>';
+
+            for (var i = 0; i < pairs.length; i++) {
+                var p = pairs[i];
+                var sel = wizardData.transportSelections[i];
+                var label = p.isReturn ? '返程' : '前往';
+                var transportDesc = '';
+                if (sel && sel.selected) {
+                    totalTransport += sel.price || 0;
+                    if (sel.isSelfDrive) {
+                        transportDesc = '<span class="badge badge-selfdrive">自驾</span> 自驾从 ' + esc(p.from) + ' 到 ' + esc(p.to);
+                    } else if (sel.isTransfer) {
+                        transportDesc = '<span class="badge badge-transfer">中转</span> ' + esc(sel.scheduleNo) + ' ' +
+                            esc(sel.transferDetail.firstFrom) + '→' + esc(sel.transferDetail.secondTo) + ' ' +
+                            sel.departTime + '-' + sel.arriveTime;
+                    } else {
+                        var typeName = sel.type === 'train' ? '火车' : '航班';
+                        var badgeClass = sel.type === 'train' ? 'badge-train' : 'badge-flight';
+                        transportDesc = '<span class="badge ' + badgeClass + '">' + typeName + '</span> ' +
+                            esc(sel.scheduleNo) + ' ' + sel.departTime + '→' + sel.arriveTime;
+                    }
+                    html += '<div class="confirm-item">' +
+                        '<span><span class="label">' + label + '：</span> ' + transportDesc + '</span>' +
+                        '<span class="price">¥' + (sel.price || 0) + '</span>' +
+                        '</div>';
+                } else {
+                    html += '<div class="confirm-item">' +
+                        '<span><span class="label">' + label + '：</span> ' + esc(p.from) + ' → ' + esc(p.to) + '</span>' +
+                        '<span class="value" style="color:#dc2626;">未选择</span>' +
+                        '</div>';
+                }
+            }
+            html += '</div>';
+
+            // 酒店信息
+            var totalHotel = 0;
+            html += '<div class="confirm-section">';
+            html += '<div class="confirm-section-title"><span class="icon">&#127968;</span> 住宿安排</div>';
+            for (var i = 0; i < destCities.length; i++) {
+                var sel = wizardData.hotelSelections[i];
+                if (sel && sel.noHotel) {
+                    html += '<div class="confirm-item">' +
+                        '<span><span class="label">' + esc(destCities[i]) + '：</span> 不安排住宿</span>' +
+                        '<span class="value">-</span>' +
+                        '</div>';
+                } else if (sel && sel.hotelId) {
+                    totalHotel += sel.hotelPrice || 0;
+                    html += '<div class="confirm-item">' +
+                        '<span><span class="label">' + esc(destCities[i]) + '：</span> ' + esc(sel.hotelName) + '</span>' +
+                        '<span class="price">¥' + (sel.hotelPrice || 0) + '</span>' +
+                        '</div>';
+                } else {
+                    html += '<div class="confirm-item">' +
+                        '<span><span class="label">' + esc(destCities[i]) + '：</span> 未选择</span>' +
+                        '<span class="value" style="color:#dc2626;">未选择</span>' +
+                        '</div>';
+                }
+            }
+            html += '</div>';
+
+            // 总价
+            var grandTotal = totalTransport + totalHotel;
+            html += '<div class="confirm-total">' +
+                '<span>行程总费用</span>' +
+                '<span class="total-price">¥' + grandTotal + '</span>' +
+                '</div>';
+
+            // 附加说明
+            html += '<div class="hint" style="margin-top:16px;margin-bottom:0;">' +
+                '交通费合计：¥' + totalTransport + ' | 住宿费合计：¥' + totalHotel +
+                ' | 最终行程可能包含更多细节安排（景点、用餐等），费用将在生成后展示。' +
+                '</div>';
+
+            container.innerHTML = html;
+        }
+
+        // ===== 生成行程 =====
+        document.getElementById('btn-generate').addEventListener('click', function () {
+            if (!localStorage.getItem('token')) {
+                if (confirm('请先登录才能生成行程，是否前往登录？')) {
+                    window.location.href = 'login.html';
+                }
+                return;
+            }
+
+            // 检查是否有未选择的交通段
+            var pairs = getCityPairs();
+            var hasUnselected = false;
+            for (var i = 0; i < pairs.length; i++) {
+                if (!wizardData.transportSelections[i] || !wizardData.transportSelections[i].selected) {
+                    hasUnselected = true;
+                    break;
+                }
+            }
+            if (hasUnselected) {
+                if (!confirm('有交通段未选择，将不包含交通信息。是否继续？')) {
+                    return;
+                }
+            }
+
+            var btn = this;
+            btn.disabled = true;
+            btn.textContent = '生成中...';
+
+            // 隐藏当前界面，显示加载
+            document.getElementById('step-confirm').classList.remove('active');
+            document.getElementById('plan-loading').style.display = 'block';
+
+            // 构造请求体
+            var destCities = [];
+            var rows = document.querySelectorAll('#city-rows .city-row');
+            for (var i = 0; i < rows.length; i++) {
+                var prov = rows[i].querySelector('.city-province').value;
+                var city = rows[i].querySelector('.city-city').value;
+                var days = rows[i].querySelector('.city-days').value;
+                if (!prov) continue;
+                destCities.push({
+                    province: prov,
+                    city: city || null,
+                    days: days ? parseInt(days, 10) : null,
+                    hotelId: wizardData.hotelSelections[i] && !wizardData.hotelSelections[i].noHotel ? wizardData.hotelSelections[i].hotelId : null
+                });
+            }
+
+            var transportSegments = [];
+            for (var i = 0; i < pairs.length; i++) {
+                var sel = wizardData.transportSelections[i];
+                if (sel && sel.selected && !sel.isSelfDrive) {
+                    if (sel.isTransfer) {
+                        transportSegments.push({
+                            type: 'transfer',
+                            scheduleNo: sel.scheduleNo,
+                            fromCity: sel.transferDetail.firstFrom,
+                            toCity: sel.transferDetail.secondTo,
+                            departTime: sel.departTime,
+                            arriveTime: sel.arriveTime,
+                            price: sel.price || 0
+                        });
+                    } else {
+                        transportSegments.push({
+                            type: sel.type,
+                            scheduleNo: sel.scheduleNo,
+                            fromCity: sel.from,
+                            toCity: sel.to,
+                            departTime: sel.departTime,
+                            arriveTime: sel.arriveTime,
+                            price: sel.price || 0
+                        });
+                    }
+                }
+            }
+
+            var body = {
+                originCity: wizardData.originCity || null,
+                startDate: wizardData.startDate || null,
+                endDate: wizardData.endDate || null,
+                cities: destCities,
+                transportSegments: transportSegments.length > 0 ? transportSegments : null
+            };
+
+            api('/api/plan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            }).then(function (data) {
+                document.getElementById('plan-loading').style.display = 'none';
+                if (data.code === 200) {
+                    renderResult(data.data);
+                    document.getElementById('result-section').style.display = 'block';
+                } else {
+                    alert(data.message || '规划失败');
+                    document.getElementById('step-confirm').classList.add('active');
+                }
+            }).catch(function (e) {
+                console.error('规划失败', e);
+                document.getElementById('plan-loading').style.display = 'none';
+                alert('请求失败，请确认后端已启动');
+                document.getElementById('step-confirm').classList.add('active');
+            }).finally(function () {
+                btn.disabled = false;
+                btn.textContent = '生成行程';
+            });
+        });
+
+        document.getElementById('confirm-prev').addEventListener('click', function () {
+            goPrev();
+        });
+
+        // ===== 结果渲染 =====
+        var MODE_NAME = { 'self-drive': '自驾', 'train': '火车', 'flight': '飞机', 'transfer': '中转' };
+        var SLOT_TYPE = {
+            'transport': { name: '交通', cls: 'slot-transport' },
+            'hotel': { name: '酒店', cls: 'slot-hotel' },
+            'attraction': { name: '景点', cls: 'slot-attraction' },
+            'meal': { name: '用餐', cls: 'slot-meal' },
+            'free': { name: '自由', cls: 'slot-free' }
+        };
+
+        function renderResult(result) {
+            var container = document.getElementById('plan-result');
+            container.style.display = 'block';
+
+            var dest = result.cities && result.cities.length
+                ? result.cities.map(function (c) { return c.city || c.province; }).join(' → ')
+                : (result.city || result.province || '');
+            var modeName = result.transportSegments && result.transportSegments.length
+                ? '多段交通'
+                : (MODE_NAME[result.transportMode] || '自驾');
+
+            var html =
+                '<div class="plan-summary">' +
+                    '<div class="stat"><div class="num">' + esc(dest) + '</div><div class="label">规划目的地</div></div>' +
+                    '<div class="stat"><div class="num">' + result.days + '</div><div class="label">行程天数</div></div>' +
+                    '<div class="stat"><div class="num">' + modeName + '</div><div class="label">出行方式</div></div>' +
+                    '<div class="stat"><div class="num">¥' + result.totalCost + '</div><div class="label">总花费</div></div>' +
+                    '<div class="stat"><div class="num">' + result.avgRating + '</div><div class="label">平均评分</div></div>' +
+                '</div>';
+
+            // 交通段列表
+            if (result.transportSegments && result.transportSegments.length > 0) {
+                html += '<div class="card" style="margin-bottom:16px;">';
+                html += '<div class="card-title" style="margin-bottom:10px;">交通段列表</div>';
+                for (var si = 0; si < result.transportSegments.length; si++) {
+                    var seg = result.transportSegments[si];
+                    var tn = seg.type === 'flight' ? '航班' : (seg.type === 'transfer' ? '中转' : '火车');
+                    var badgeClass = seg.type === 'flight' ? 'badge-flight' : (seg.type === 'transfer' ? 'badge-transfer' : 'badge-train');
+                    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed var(--border);">' +
+                        '<span style="font-size:13px;"><span class="badge ' + badgeClass + '">' + tn + '</span> ' +
+                        esc(seg.scheduleNo) + '：' +
+                        esc(seg.fromCity) + ' ' + esc(seg.departTime) + ' → ' + esc(seg.toCity) + ' ' + esc(seg.arriveTime) +
+                        (seg.price ? ' <span style="color:#e07b39;">¥' + seg.price + '</span>' : '') + '</span>' +
+                        '</div>';
+                }
+                html += '</div>';
+            }
+
+            // 城市行程
+            var cityList = (result.cities && result.cities.length) ? result.cities : null;
+
+            if (cityList) {
+                for (var ci = 0; ci < cityList.length; ci++) {
+                    var c = cityList[ci];
+                    html += '<div class="city-plan">';
+                    html += '<div class="city-header">' +
+                        '<span class="city-name">' + esc(c.city || c.province) + '</span>' +
+                        '<span class="city-meta">' + esc(c.province) + ' · 停留 ' + c.days + ' 天 · 花费 ¥' + c.cost + '</span>' +
+                    '</div>';
+
+                    if (c.hotel) {
+                        html += '<div class="city-info">酒店：' + esc(c.hotel.name) +
+                            (c.hotel.address ? '（' + esc(c.hotel.address) + '）' : '') + '</div>';
+                    }
+                    if (c.transport) {
+                        var t = c.transport;
+                        var tn = t.type === 'flight' ? '航班' : '火车';
+                        html += '<div class="city-info">' + tn + '：' + esc(t.scheduleNo) + ' ' +
+                            esc(t.fromCity) + ' ' + esc(t.departTime) + ' → ' + esc(t.toCity) + ' ' + esc(t.arriveTime) +
+                            (t.price ? '（¥' + t.price + '）' : '') + '</div>';
+                    }
+
+                    for (var di = 0; di < c.dayPlans.length; di++) {
+                        html += renderDay(c.dayPlans[di]);
+                    }
+                    html += '</div>';
+                }
+            } else if (result.dayPlans) {
+                for (var di2 = 0; di2 < result.dayPlans.length; di2++) {
+                    html += renderDay(result.dayPlans[di2]);
+                }
+            }
+
+            container.innerHTML = html;
+        }
+
+        function renderDay(day) {
+            var dateStr = day.date ? ' · ' + day.date : '';
+            var html =
+                '<div class="day-plan">' +
+                    '<div class="day-header">' +
+                        '<span class="day-title">第 ' + day.day + ' 天' + dateStr + '</span>' +
+                        '<span class="day-meta">游玩约 ' + day.dayHours + ' 小时 · 花费 ¥' + day.dayCost + ' · 评分 ' + day.dayRating + '</span>' +
+                    '</div>' +
+                    '<div class="timeline">';
+
+            for (var i = 0; i < day.slots.length; i++) {
+                var ts = day.slots[i];
+                var meta = SLOT_TYPE[ts.type] || { name: '其他', cls: 'slot-free' };
+                var note = ts.note ? '<div class="slot-note">' + esc(ts.note) + '</div>' : '';
+                var spotInfo = '';
+                if (ts.spot) {
+                    var s = ts.spot;
+                    var price = (s.price == 0) ? '免费' : '¥' + s.price;
+                    spotInfo = '<div class="slot-spot">' +
+                        '<span class="level-badge">' + esc(s.level) + '</span>' +
+                        '<span>评分 ' + s.rating + '</span>' +
+                        '<span>' + price + '</span>' +
+                        (s.openTime ? '<span>' + esc(s.openTime) + '</span>' : '') +
+                    '</div>';
+                }
+                html +=
+                    '<div class="timeline-item">' +
+                        '<div class="timeline-time">' + esc(ts.startTime) + '<br><span>' + esc(ts.endTime) + '</span></div>' +
+                        '<div class="timeline-dot ' + meta.cls + '"></div>' +
+                        '<div class="timeline-body">' +
+                            '<div class="slot-title"><span class="badge ' + meta.cls + '">' + meta.name + '</span> ' + esc(ts.title) + '</div>' +
+                            spotInfo + note +
+                        '</div>' +
+                    '</div>';
+            }
+
+            html += '</div></div>';
+            return html;
+        }
+
+        // ===== 结果页面操作 =====
+        document.getElementById('btn-back-to-wizard').addEventListener('click', function () {
+            document.getElementById('result-section').style.display = 'none';
+            document.getElementById('plan-result').style.display = 'none';
+            currentStep = stepKeys.indexOf('confirm');
+            showCurrentStep();
+        });
+
+        document.getElementById('btn-new-plan').addEventListener('click', function () {
+            if (confirm('重新规划将清空当前所有选择，确认吗？')) {
+                location.reload();
+            }
+        });
+
+        // ===== 弹窗相关（旧版兼容，保留但不再使用） =====
+        function closeTransportModal() {
+            document.getElementById('transport-modal').style.display = 'none';
+        }
+
+        function closeHotelModal() {
+            document.getElementById('hotel-modal').style.display = 'none';
+        }
+
+        // 中转页面切换到火车/航班时不要显示中转
+        window.switchTransportTab = function (tab) {
+            if (modalTarget !== null) {
+                loadTransportTab(modalTarget, tab);
+            }
+        };
+
+        // ===== 初始化 =====
+        function init() {
+            renderNav();
+
+            // 加载城市数据
+            api('/api/city/all').then(function (data) {
+                if (data.code === 200) {
+                    allCities = data.data;
+                    initStep1();
+                    // 默认给一行目的地
+                    if (document.querySelectorAll('.city-row').length === 0) {
+                        addCityRow();
+                    }
+                    updateNextButton();
+                    // 构建初始步骤
+                    buildSteps();
+                    initTransportSteps();
+                    initHotelSteps();
+                }
+            }).catch(function () {
+                alert('加载城市数据失败，请确认后端已启动');
+            });
+        }
+
+        init();
+    </script>
+
+</body></html>
