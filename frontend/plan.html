@@ -1138,6 +1138,7 @@ body {
         // ===== 数据 =====
         var allSpots = [];
         var allHotels = [];
+        var allCities = []; // 从 city 表加载
         var BASE = 'http://localhost:8080';
 
         function api(url, options) {
@@ -1165,7 +1166,7 @@ body {
 
         // ===== 目的地城市行 =====
         function populateProvince(select) {
-            var provinces = unique(allSpots.map(function (s) { return s.province; }));
+            var provinces = unique(allCities.map(function (c) { return c.province; })).sort();
             select.innerHTML = '<option value="">请选择省份</option>';
             for (var i = 0; i < provinces.length; i++) {
                 var opt = document.createElement('option');
@@ -1178,8 +1179,8 @@ body {
         function populateCity(province, citySelect) {
             citySelect.innerHTML = '<option value="">请选择城市</option>';
             if (!province) return;
-            var cities = unique(allSpots.filter(function (s) { return s.province === province; })
-                .map(function (s) { return s.city; }));
+            var cities = allCities.filter(function (c) { return c.province === province; })
+                .map(function (c) { return c.cityName; }).sort();
             for (var i = 0; i < cities.length; i++) {
                 var opt = document.createElement('option');
                 opt.value = cities[i];
@@ -1746,7 +1747,7 @@ body {
         function populateOrigin() {
             var provSel = document.getElementById('plan-origin-province');
             var citySel = document.getElementById('plan-origin');
-            var provinces = unique(allSpots.map(function (s) { return s.province; })).sort();
+            var provinces = unique(allCities.map(function (c) { return c.province; })).sort();
             provSel.innerHTML = '<option value="">请选择省份</option>';
             for (var i = 0; i < provinces.length; i++) {
                 var opt = document.createElement('option');
@@ -1755,8 +1756,8 @@ body {
                 provSel.appendChild(opt);
             }
             provSel.addEventListener('change', function () {
-                var cities = unique(allSpots.filter(function (s) { return s.province === provSel.value; })
-                    .map(function (s) { return s.city; })).sort();
+                var cities = allCities.filter(function (c) { return c.province === provSel.value; })
+                    .map(function (c) { return c.cityName; }).sort();
                 citySel.innerHTML = '<option value="">请选择城市</option>';
                 for (var j = 0; j < cities.length; j++) {
                     var opt2 = document.createElement('option');
@@ -1770,15 +1771,22 @@ body {
         }
 
         function loadBaseData() {
-            api('/api/scenic-spot/list').then(function (data) {
+            // 先加载城市数据
+            api('/api/city/all').then(function (data) {
                 if (data.code === 200) {
-                    allSpots = data.data;
+                    allCities = data.data;
                     populateOrigin();
                     // 默认给一行目的地
                     if (document.querySelectorAll('.city-row').length === 0) {
                         addCityRow();
                     }
                     regenTransportSegments();
+                }
+            });
+
+            api('/api/scenic-spot/list').then(function (data) {
+                if (data.code === 200) {
+                    allSpots = data.data;
                 }
             }).catch(function () {
                 console.error('加载景点失败');
