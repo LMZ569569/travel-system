@@ -16,4 +16,8 @@ public interface ScenicSpotService {
     List<ScenicSpot> findByProvince(String province);
 
     List<ScenicSpot> findByCity(String city);
+
+    List<String> findAllProvinces();
+
+    List<String> findCitiesByProvince(String province);
 }

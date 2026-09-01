@@ -21,4 +21,10 @@ public interface ScenicSpotMapper {
 
     @Select("SELECT * FROM scenic_spot WHERE city = #{city}")
     List<ScenicSpot> findByCity(@Param("city") String city);
+
+    @Select("SELECT DISTINCT province FROM scenic_spot ORDER BY province")
+    List<String> findAllProvinces();
+
+    @Select("SELECT DISTINCT city FROM scenic_spot WHERE province = #{province} ORDER BY city")
+    List<String> findCitiesByProvince(@Param("province") String province);
 }

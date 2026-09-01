@@ -1372,18 +1372,24 @@ body { font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", -apple
         <h1 class="page-title">景点大全</h1>
         <p class="page-subtitle">浏览全国 5A/4A 级景点，按省份筛选，为你的旅行做准备</p>
 
-        <!-- 省份筛选 -->
+        <!-- 省份和城市筛选 -->
         <div class="card">
             <div class="form-row">
                 <div class="form-group">
                     <label>按省份筛选</label>
                     <select id="province-select">
                         <option value="">全部省份</option>
-                    <option value="北京">北京</option><option value="浙江">浙江</option><option value="上海">上海</option><option value="四川">四川</option><option value="陕西">陕西</option><option value="江苏">江苏</option><option value="湖北">湖北</option><option value="广东">广东</option></select>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>按城市筛选</label>
+                    <select id="city-select">
+                        <option value="">全部城市</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label>当前显示</label>
-                    <span style="line-height:40px;color:#888;font-size:14px;" id="count-label">共 24 个景点</span>
+                    <span style="line-height:40px;color:#888;font-size:14px;" id="count-label">加载中...</span>
                 </div>
             </div>
         </div>
@@ -1393,11 +1399,11 @@ body { font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", -apple
 
         <!-- 空状态 -->
         <div class="empty" id="empty" style="display:none;">
-            该省份暂无景点数据
+            暂无景点数据
         </div>
 
         <!-- 景点卡片 -->
-        <div class="spot-grid" id="spot-grid"><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">故宫博物院</span><span class="level-badge">5A</span></div><div class="spot-meta">北京 · 北京 · 08:30-17:00</div><div class="spot-desc">中国明清两代的皇家宫殿，世界文化遗产</div><div class="spot-bottom"><span class="spot-price">¥60</span><span class="spot-rating">评分 <b>4.8</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">颐和园</span><span class="level-badge">5A</span></div><div class="spot-meta">北京 · 北京 · 06:30-18:00</div><div class="spot-desc">中国现存规模最大、保存最完整的皇家园林</div><div class="spot-bottom"><span class="spot-price">¥30</span><span class="spot-rating">评分 <b>4.7</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">八达岭长城</span><span class="level-badge">5A</span></div><div class="spot-meta">北京 · 北京 · 07:30-17:30</div><div class="spot-desc">明长城中保存最好的一段，世界文化遗产</div><div class="spot-bottom"><span class="spot-price">¥40</span><span class="spot-rating">评分 <b>4.6</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">天坛公园</span><span class="level-badge">5A</span></div><div class="spot-meta">北京 · 北京 · 06:00-22:00</div><div class="spot-desc">明清两代皇帝祭天祈谷的场所</div><div class="spot-bottom"><span class="spot-price">¥15</span><span class="spot-rating">评分 <b>4.7</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">圆明园遗址公园</span><span class="level-badge">4A</span></div><div class="spot-meta">北京 · 北京 · 07:00-21:00</div><div class="spot-desc">清代大型皇家园林遗址</div><div class="spot-bottom"><span class="spot-price">¥10</span><span class="spot-rating">评分 <b>4.5</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">西湖风景名胜区</span><span class="level-badge">5A</span></div><div class="spot-meta">浙江 · 杭州 · 全天开放</div><div class="spot-desc">杭州标志性景点，三面云山一面城</div><div class="spot-bottom"><span class="spot-price">免费</span><span class="spot-rating">评分 <b>4.9</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">灵隐寺</span><span class="level-badge">5A</span></div><div class="spot-meta">浙江 · 杭州 · 07:00-18:00</div><div class="spot-desc">杭州最早的名刹，济公出家地</div><div class="spot-bottom"><span class="spot-price">¥45</span><span class="spot-rating">评分 <b>4.7</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">千岛湖风景区</span><span class="level-badge">5A</span></div><div class="spot-meta">浙江 · 杭州 · 08:00-17:00</div><div class="spot-desc">以千岛、秀水、金腰带为主要特色的湖泊景区</div><div class="spot-bottom"><span class="spot-price">¥130</span><span class="spot-rating">评分 <b>4.6</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">西溪国家湿地公园</span><span class="level-badge">5A</span></div><div class="spot-meta">浙江 · 杭州 · 08:30-17:30</div><div class="spot-desc">中国首个国家湿地公园</div><div class="spot-bottom"><span class="spot-price">¥80</span><span class="spot-rating">评分 <b>4.5</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">外滩</span><span class="level-badge">4A</span></div><div class="spot-meta">上海 · 上海 · 全天开放</div><div class="spot-desc">上海标志性景观，万国建筑博览群</div><div class="spot-bottom"><span class="spot-price">免费</span><span class="spot-rating">评分 <b>4.8</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">东方明珠广播电视塔</span><span class="level-badge">5A</span></div><div class="spot-meta">上海 · 上海 · 08:00-21:30</div><div class="spot-desc">上海地标建筑，可俯瞰全城</div><div class="spot-bottom"><span class="spot-price">¥220</span><span class="spot-rating">评分 <b>4.6</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">上海迪士尼乐园</span><span class="level-badge">5A</span></div><div class="spot-meta">上海 · 上海 · 08:30-20:30</div><div class="spot-desc">中国大陆首座迪士尼主题乐园</div><div class="spot-bottom"><span class="spot-price">¥399</span><span class="spot-rating">评分 <b>4.8</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">都江堰景区</span><span class="level-badge">5A</span></div><div class="spot-meta">四川 · 成都 · 08:00-18:00</div><div class="spot-desc">世界文化遗产，古代水利工程典范</div><div class="spot-bottom"><span class="spot-price">¥80</span><span class="spot-rating">评分 <b>4.8</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">青城山</span><span class="level-badge">5A</span></div><div class="spot-meta">四川 · 成都 · 08:00-17:30</div><div class="spot-desc">道教发源地之一，青城天下幽</div><div class="spot-bottom"><span class="spot-price">¥80</span><span class="spot-rating">评分 <b>4.7</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">宽窄巷子</span><span class="level-badge">4A</span></div><div class="spot-meta">四川 · 成都 · 全天开放</div><div class="spot-desc">成都最具代表性的历史文化街区</div><div class="spot-bottom"><span class="spot-price">免费</span><span class="spot-rating">评分 <b>4.5</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">秦始皇兵马俑博物馆</span><span class="level-badge">5A</span></div><div class="spot-meta">陕西 · 西安 · 08:30-17:00</div><div class="spot-desc">世界第八大奇迹，秦代地下军团</div><div class="spot-bottom"><span class="spot-price">¥120</span><span class="spot-rating">评分 <b>4.9</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">大雁塔</span><span class="level-badge">5A</span></div><div class="spot-meta">陕西 · 西安 · 08:00-18:00</div><div class="spot-desc">唐代玄奘译经之地，西安地标</div><div class="spot-bottom"><span class="spot-price">¥50</span><span class="spot-rating">评分 <b>4.6</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">华清宫</span><span class="level-badge">5A</span></div><div class="spot-meta">陕西 · 西安 · 07:30-18:00</div><div class="spot-desc">唐代皇家温泉行宫，西安事变发生地</div><div class="spot-bottom"><span class="spot-price">¥120</span><span class="spot-rating">评分 <b>4.6</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">中山陵</span><span class="level-badge">5A</span></div><div class="spot-meta">江苏 · 南京 · 08:30-17:00</div><div class="spot-desc">孙中山先生陵寝，南京地标</div><div class="spot-bottom"><span class="spot-price">免费</span><span class="spot-rating">评分 <b>4.7</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">夫子庙秦淮风光带</span><span class="level-badge">5A</span></div><div class="spot-meta">江苏 · 南京 · 全天开放</div><div class="spot-desc">南京历史文化名街，秦淮河畔</div><div class="spot-bottom"><span class="spot-price">免费</span><span class="spot-rating">评分 <b>4.6</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">黄鹤楼</span><span class="level-badge">5A</span></div><div class="spot-meta">湖北 · 武汉 · 08:00-18:00</div><div class="spot-desc">江南三大名楼之首，武汉地标</div><div class="spot-bottom"><span class="spot-price">¥70</span><span class="spot-rating">评分 <b>4.6</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">东湖生态旅游风景区</span><span class="level-badge">5A</span></div><div class="spot-meta">湖北 · 武汉 · 全天开放</div><div class="spot-desc">中国最大的城中湖</div><div class="spot-bottom"><span class="spot-price">免费</span><span class="spot-rating">评分 <b>4.6</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">白云山风景区</span><span class="level-badge">5A</span></div><div class="spot-meta">广东 · 广州 · 06:00-21:00</div><div class="spot-desc">广州城市绿肺，羊城第一秀</div><div class="spot-bottom"><span class="spot-price">¥5</span><span class="spot-rating">评分 <b>4.6</b></span></div></div></div><div class="spot-card"><div class="spot-body"><div class="spot-top"><span class="spot-name">广州长隆旅游度假区</span><span class="level-badge">5A</span></div><div class="spot-meta">广东 · 广州 · 09:30-18:00</div><div class="spot-desc">大型综合主题乐园</div><div class="spot-bottom"><span class="spot-price">¥250</span><span class="spot-rating">评分 <b>4.8</b></span></div></div></div></div>
+        <div class="spot-grid" id="spot-grid"></div>
     </div>
 
     <script>
@@ -1480,27 +1486,69 @@ body { font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", -apple
             grid.innerHTML = html;
         }
 
+        // 当前选中的省份
+        var currentProvince = '';
+
+        // 填充城市下拉框
+        function populateCities(province) {
+            var citySelect = document.getElementById('city-select');
+            citySelect.innerHTML = '<option value="">全部城市</option>';
+            if (!province) return;
+            fetch('http://localhost:8080/api/scenic-spot/cities/' + encodeURIComponent(province))
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.code === 200 && data.data) {
+                    for (var i = 0; i < data.data.length; i++) {
+                        var opt = document.createElement('option');
+                        opt.value = data.data[i];
+                        opt.textContent = data.data[i];
+                        citySelect.appendChild(opt);
+                    }
+                }
+            })
+            .catch(function (e) { console.error('加载城市失败', e); });
+        }
+
+        // 筛选景点
+        function filterSpots() {
+            var province = document.getElementById('province-select').value;
+            var city = document.getElementById('city-select').value;
+            if (!province) {
+                renderSpots(allSpots);
+            } else if (!city) {
+                var filtered = allSpots.filter(function (s) { return s.province === province; });
+                renderSpots(filtered);
+            } else {
+                var filtered = allSpots.filter(function (s) { return s.province === province && s.city === city; });
+                renderSpots(filtered);
+            }
+        }
+
         // 加载景点数据
         function fetchSpots() {
+            document.getElementById('loading').style.display = 'block';
+            // 加载省份列表
+            fetch('http://localhost:8080/api/scenic-spot/provinces')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.code === 200 && data.data) {
+                    var select = document.getElementById('province-select');
+                    for (var i = 0; i < data.data.length; i++) {
+                        var opt = document.createElement('option');
+                        opt.value = data.data[i];
+                        opt.textContent = data.data[i];
+                        select.appendChild(opt);
+                    }
+                }
+            })
+            .catch(function (e) { console.error('加载省份失败', e); });
+            // 加载景点数据
             fetch('http://localhost:8080/api/scenic-spot/list')
             .then(function (res) { return res.json(); })
             .then(function (data) {
+                document.getElementById('loading').style.display = 'none';
                 if (data.code === 200) {
                     allSpots = data.data;
-                    // 填充省份下拉框（去重）
-                    var select = document.getElementById('province-select');
-                    var provinces = [];
-                    for (var i = 0; i < allSpots.length; i++) {
-                        if (provinces.indexOf(allSpots[i].province) === -1) {
-                            provinces.push(allSpots[i].province);
-                        }
-                    }
-                    for (var j = 0; j < provinces.length; j++) {
-                        var opt = document.createElement('option');
-                        opt.value = provinces[j];
-                        opt.textContent = provinces[j];
-                        select.appendChild(opt);
-                    }
                     renderSpots(allSpots);
                 }
             })
@@ -1512,13 +1560,19 @@ body { font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", -apple
 
         // 省份筛选
         document.getElementById('province-select').addEventListener('change', function () {
-            var selected = this.value;
-            if (!selected) {
-                renderSpots(allSpots);
-            } else {
-                var filtered = allSpots.filter(function (s) { return s.province === selected; });
-                renderSpots(filtered);
+            var province = this.value;
+            currentProvince = province;
+            // 重置城市下拉框
+            document.getElementById('city-select').innerHTML = '<option value="">全部城市</option>';
+            if (province) {
+                populateCities(province);
             }
+            filterSpots();
+        });
+
+        // 城市筛选
+        document.getElementById('city-select').addEventListener('change', function () {
+            filterSpots();
         });
 
         // 页面初始化

@@ -36,4 +36,14 @@ public class ScenicSpotServiceImpl implements ScenicSpotService {
     public List<ScenicSpot> findByCity(String city) {
         return scenicSpotMapper.findByCity(city);
     }
+
+    @Override
+    public List<String> findAllProvinces() {
+        return scenicSpotMapper.findAllProvinces();
+    }
+
+    @Override
+    public List<String> findCitiesByProvince(String province) {
+        return scenicSpotMapper.findCitiesByProvince(province);
+    }
 }

@@ -44,4 +44,16 @@ public class ScenicSpotController {
     public Result<List<ScenicSpot>> byCity(@PathVariable String city) {
         return Result.success(scenicSpotService.findByCity(city));
     }
+
+    /** 获取所有省份列表 */
+    @GetMapping("/provinces")
+    public Result<List<String>> provinces() {
+        return Result.success(scenicSpotService.findAllProvinces());
+    }
+
+    /** 获取某省份下的所有城市 */
+    @GetMapping("/cities/{province}")
+    public Result<List<String>> citiesByProvince(@PathVariable String province) {
+        return Result.success(scenicSpotService.findCitiesByProvince(province));
+    }
 }
