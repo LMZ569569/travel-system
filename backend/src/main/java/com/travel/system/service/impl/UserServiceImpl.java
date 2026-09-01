@@ -5,8 +5,8 @@ import com.travel.system.mapper.UserMapper;
 import com.travel.system.service.UserService;
 import com.travel.system.dto.LoginResponse;
 import com.travel.system.util.JwtUtil;
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 /**
@@ -18,8 +18,6 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserMapper userMapper;
 
-    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-
     @Override
     public LoginResponse register(String username, String password, String nickname) {
         if (userMapper.findByUsername(username) != null) {
@@ -27,7 +25,7 @@ public class UserServiceImpl implements UserService {
         }
         User user = new User();
         user.setUsername(username);
-        user.setPassword(encoder.encode(password));
+        user.setPassword(BCrypt.hashpw(password, BCrypt.gensalt()));
         user.setNickname(nickname);
         userMapper.insert(user);
         String token = JwtUtil.generateToken(user.getId(), user.getUsername());
@@ -40,7 +38,7 @@ public class UserServiceImpl implements UserService {
         if (user == null) {
             return null;
         }
-        if (!encoder.matches(password, user.getPassword())) {
+        if (!BCrypt.checkpw(password, user.getPassword())) {
             return null;
         }
         String token = JwtUtil.generateToken(user.getId(), user.getUsername());

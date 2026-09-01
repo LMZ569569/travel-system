@@ -49,10 +49,11 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- BCrypt 密码加密 -->
+        <!-- BCrypt 密码加密（独立库，无需 Spring Security） -->
         <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-crypto</artifactId>
+            <groupId>org.mindrot</groupId>
+            <artifactId>jbcrypt</artifactId>
+            <version>0.4</version>
         </dependency>
 
         <!-- JWT 令牌 -->
