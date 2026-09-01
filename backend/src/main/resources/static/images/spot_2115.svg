@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f5576c;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="overlay" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgba(255,255,255,0.1)" />
+      <stop offset="100%" style="stop-color:rgba(0,0,0,0.1)" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)" />
+  <rect width="800" height="600" fill="url(#overlay)" />
+  <!-- 装饰性圆圈 -->
+  <circle cx="100" cy="100" r="150" fill="rgba(255,255,255,0.05)" />
+  <circle cx="700" cy="500" r="200" fill="rgba(0,0,0,0.03)" />
+  <circle cx="650" cy="150" r="80" fill="rgba(255,255,255,0.06)" />
+  <circle cx="150" cy="450" r="100" fill="rgba(0,0,0,0.04)" />
+  <!-- 中央内容 -->
+  <text x="400" y="260" text-anchor="middle" fill="white" font-size="36px" font-weight="bold" font-family="PingFang SC, Microsoft YaHei, sans-serif">库伦三大寺</text>
+  <text x="400" y="320" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-size="18px" font-family="PingFang SC, Microsoft YaHei, sans-serif">通辽</text>
+  <text x="400" y="350" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="14px" font-family="PingFang SC, Microsoft YaHei, sans-serif">内蒙古</text>
+  <!-- 底部装饰线 -->
+  <line x1="300" y1="400" x2="500" y2="400" stroke="rgba(255,255,255,0.3)" stroke-width="2" />
+  <circle cx="400" cy="400" r="4" fill="rgba(255,255,255,0.5)" />
+</svg>
