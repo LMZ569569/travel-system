@@ -1146,7 +1146,10 @@ body {
                     </div>
                     <div class="form-group">
                         <label>出发城市</label>
-                        <select id="fuzzy-origin-city"><option value="">请选择城市</option></select>
+                        <div style="display:flex;gap:6px;align-items:stretch;">
+                            <select id="fuzzy-origin-city" style="flex:1;"><option value="">请选择城市</option></select>
+                            <button type="button" class="btn btn-sm" onclick="locateMe('fuzzy')" title="使用当前位置" style="white-space:nowrap;padding:0 10px;">📍 定位</button>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>开始日期</label>
@@ -1194,7 +1197,10 @@ body {
                     </div>
                     <div class="form-group">
                         <label>出发城市</label>
-                        <select id="origin-city"><option value="">请选择城市</option></select>
+                        <div style="display:flex;gap:6px;align-items:stretch;">
+                            <select id="origin-city" style="flex:1;"><option value="">请选择城市</option></select>
+                            <button type="button" class="btn btn-sm" onclick="locateMe('precise')" title="使用当前位置" style="white-space:nowrap;padding:0 10px;">📍 定位</button>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>出发日期</label>
@@ -1367,6 +1373,77 @@ body {
         function esc(s) {
             if (s === null || s === undefined) return '';
             return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        // ===== 定位功能 =====
+        var GAODE_KEY = '054a353f4d54a0ac8783c6c319ccc5e0';
+
+        function locateMe(mode) {
+            if (!navigator.geolocation) {
+                alert('您的浏览器不支持定位功能');
+                return;
+            }
+            var btn = mode === 'fuzzy'
+                ? document.querySelector('#fuzzy-origin-city + button')
+                : document.querySelector('#origin-city + button');
+            var origText = btn.textContent;
+            btn.textContent = '定位中...';
+            btn.disabled = true;
+
+            navigator.geolocation.getCurrentPosition(function (pos) {
+                var lng = pos.coords.longitude;
+                var lat = pos.coords.latitude;
+                var url = 'https://restapi.amap.com/v3/geocode/regeo?location='
+                    + lng + ',' + lat + '&key=' + GAODE_KEY + '&radius=1000&extensions=base';
+
+                fetch(url).then(function (r) { return r.json(); }).then(function (data) {
+                    btn.textContent = origText;
+                    btn.disabled = false;
+                    if (data.status === '1' && data.regeocode) {
+                        var addr = data.regeocode.addressComponent;
+                        var city = addr.city || addr.province;
+                        var province = addr.province;
+                        if (city && province) {
+                            // 城市名去除"市"后缀做匹配
+                            var cityName = city.replace(/市$/, '');
+                            // 查找匹配的 allCities 记录
+                            var match = allCities.find(function (c) {
+                                return c.province === province
+                                    && (c.cityName === city || c.cityName === cityName);
+                            });
+                            if (match) {
+                                // 设置省份
+                                var provEl = mode === 'fuzzy'
+                                    ? document.getElementById('fuzzy-origin-province')
+                                    : document.getElementById('origin-province');
+                                provEl.value = province;
+                                // 触发 change 填充城市列表
+                                var cityEl = mode === 'fuzzy'
+                                    ? document.getElementById('fuzzy-origin-city')
+                                    : document.getElementById('origin-city');
+                                populateCity(province, cityEl);
+                                cityEl.value = match.cityName;
+                                // 触发 change 事件更新按钮状态
+                                var evt = document.createEvent('Event');
+                                evt.initEvent('change', true, true);
+                                cityEl.dispatchEvent(evt);
+                                return;
+                            }
+                        }
+                        alert('未能识别当前位置所属城市，请手动选择');
+                    } else {
+                        alert('定位解析失败，请手动选择出发城市');
+                    }
+                }).catch(function () {
+                    btn.textContent = origText;
+                    btn.disabled = false;
+                    alert('定位服务请求失败，请手动选择出发城市');
+                });
+            }, function () {
+                btn.textContent = origText;
+                btn.disabled = false;
+                alert('获取位置失败，请检查定位权限设置');
+            }, { enableHighAccuracy: true, timeout: 10000 });
         }
 
         // ===== 导航栏 =====
