@@ -360,9 +360,9 @@ body {
 .city-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 8px;
     align-items: center;
-    padding: 14px 0;
+    padding: 10px 0;
     border-bottom: 1px dashed var(--border);
 }
 
@@ -372,8 +372,8 @@ body {
 
 .city-row select,
 .city-row input {
-    height: 38px;
-    padding: 0 12px;
+    height: 36px;
+    padding: 0 8px;
     border: 1px solid var(--border);
     border-radius: 6px;
     font-size: 13px;
@@ -382,11 +382,11 @@ body {
     background: var(--card);
 }
 
-.city-row .city-province { width: 150px; }
-.city-row .city-city { width: 150px; }
-.city-row .city-days { width: 130px; }
-.city-row .city-arrive-date { width: 150px; }
-.city-row .city-leave-date { width: 150px; }
+.city-row .city-province { width: 100px; }
+.city-row .city-city { width: 100px; }
+.city-row .city-days { width: 70px; }
+.city-row .city-arrive-date { width: 110px; }
+.city-row .city-leave-date { width: 110px; }
 
 /* ---------- 表格 ---------- */
 .table-wrap {
@@ -1044,17 +1044,6 @@ body {
                         <label>出发城市</label>
                         <select id="origin-city"><option value="">请选择城市</option></select>
                     </div>
-                </div>
-
-                <div style="margin-bottom:16px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                        <label style="font-size:12px;color:var(--text-muted);letter-spacing:.5px;">游玩城市</label>
-                        <button class="btn btn-sm" id="btn-add-city" type="button">+ 添加城市</button>
-                    </div>
-                    <div id="city-rows"></div>
-                </div>
-
-                <div class="form-row" style="margin-bottom:16px;">
                     <div class="form-group">
                         <label>开始日期</label>
                         <input type="date" id="start-date">
@@ -1063,6 +1052,14 @@ body {
                         <label>结束日期</label>
                         <input type="date" id="end-date">
                     </div>
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <label style="font-size:12px;color:var(--text-muted);letter-spacing:.5px;">游玩城市</label>
+                        <button class="btn btn-sm" id="btn-add-city" type="button">+ 添加城市</button>
+                    </div>
+                    <div id="city-rows"></div>
                 </div>
 
                 <div class="checkbox-group" style="margin-bottom:4px;">
