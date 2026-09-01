@@ -1214,6 +1214,7 @@ body {
         }
 
         // ===== 车次/航班查询弹窗 =====
+        var transportQueryData = []; // 保存当前查询结果，供选择按钮使用
         // 分表后返回结构不同：火车为 trainNo/trainType，航班为 flightNo/airline，统一转成展示结构
         function normalizeTrain(t) {
             return { type: 'train', scheduleNo: t.trainNo, sub: t.trainType || '', fromCity: t.fromCity, toCity: t.toCity, departTime: t.departTime, arriveTime: t.arriveTime, price: t.price };
@@ -1223,13 +1224,14 @@ body {
         }
 
         function renderTransportResults(data) {
+            transportQueryData = data; // 保存供选择按钮使用
             var box = document.getElementById('transport-query-list');
             if (!data || data.length === 0) {
                 box.innerHTML = '<div class="empty" style="padding:24px 0;">没有找到符合条件的班次</div>';
                 return;
             }
             var html = '<table class="table"><thead><tr>' +
-                '<th>类型</th><th>车次/航班号</th><th>路线</th><th>出发</th><th>到达</th><th>票价</th>' +
+                '<th>类型</th><th>车次/航班号</th><th>路线</th><th>出发</th><th>到达</th><th>票价</th><th>操作</th>' +
                 '</tr></thead><tbody>';
             for (var i = 0; i < data.length; i++) {
                 var t = data[i];
@@ -1242,11 +1244,37 @@ body {
                     '<td>' + esc(t.departTime) + '</td>' +
                     '<td>' + esc(t.arriveTime) + '</td>' +
                     '<td>¥' + esc(t.price) + '</td>' +
+                    '<td><button class="btn btn-sm" onclick="chooseTransport(' + i + ')">选择</button></td>' +
                     '</tr>';
             }
             html += '</tbody></table>';
             box.innerHTML = html;
         }
+
+        window.chooseTransport = function (index) {
+            var t = transportQueryData[index];
+            if (!t) return;
+            var url, body;
+            if (t.type === 'flight') {
+                url = '/api/flight';
+                body = { flightNo: t.scheduleNo, airline: t.sub, fromCity: t.fromCity, toCity: t.toCity, departTime: t.departTime, arriveTime: t.arriveTime, price: t.price };
+            } else {
+                url = '/api/train';
+                body = { trainNo: t.scheduleNo, trainType: t.sub, fromCity: t.fromCity, toCity: t.toCity, departTime: t.departTime, arriveTime: t.arriveTime, price: t.price };
+            }
+            api(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            }).then(function (data) {
+                if (data.code === 200) {
+                    document.getElementById('transport-modal').style.display = 'none';
+                    alert('已选择：' + t.scheduleNo + ' ' + t.fromCity + '→' + t.toCity);
+                } else {
+                    alert(data.message || '添加失败');
+                }
+            });
+        };
 
         function queryTransportByNo() {
             var no = document.getElementById('tq-no').value.trim();
