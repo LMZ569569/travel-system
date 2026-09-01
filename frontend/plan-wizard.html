@@ -917,6 +917,103 @@ body {
     border: none;
 }
 
+/* 弹窗选项卡 */
+.modal-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+}
+
+.modal-tab {
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-muted);
+    border-bottom: 2px solid transparent;
+    transition: all .2s;
+}
+
+.modal-tab:hover {
+    color: var(--text);
+}
+
+.modal-tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.custom-tab-content {
+    min-height: 180px;
+}
+
+/* 景点搜索列表 */
+.spot-search-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-top: 4px;
+    display: none;
+}
+
+.spot-search-list.show {
+    display: block;
+}
+
+.spot-search-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.spot-search-item:last-child {
+    border-bottom: none;
+}
+
+.spot-search-item:hover {
+    background: rgba(59,130,246,.06);
+}
+
+.spot-search-item .name {
+    font-weight: 500;
+}
+
+.spot-search-item .meta {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+/* 景点预览 */
+.spot-preview {
+    padding: 12px;
+    background: rgba(59,130,246,.06);
+    border-radius: 8px;
+    margin-top: 8px;
+}
+
+.spot-preview-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.spot-preview-name {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.spot-preview-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
 /* ---------- 城市段行程 ---------- */
 .city-plan {
     background: var(--card);
@@ -2868,11 +2965,11 @@ body {
 
         // ===== 自定义项目弹窗 =====
         var customDayIndex = -1;
+        var customSelectedSpot = null;
+        var _allSpotsCache = null;
 
-        function showAddCustomModal(dayIndex) {
-            customDayIndex = dayIndex;
-            // 填充时间下拉框 08:00 ~ 21:00
-            var select = document.getElementById('custom-start');
+        function fillTimeSelect(selectId) {
+            var select = document.getElementById(selectId);
             select.innerHTML = '';
             for (var h = 8; h <= 21; h++) {
                 for (var m = 0; m < 60; m += 30) {
@@ -2883,7 +2980,30 @@ body {
                     select.appendChild(opt);
                 }
             }
+        }
+
+        function showAddCustomModal(dayIndex) {
+            customDayIndex = dayIndex;
+            customSelectedSpot = null;
+            // 重置为自定义活动 tab
+            switchCustomTab('custom');
+            // 填充时间下拉框
+            fillTimeSelect('custom-start');
+            fillTimeSelect('custom-spot-start');
             document.getElementById('custom-name').value = '';
+            document.getElementById('custom-spot-search').value = '';
+            document.getElementById('custom-spot-list').innerHTML = '';
+            document.getElementById('custom-spot-list').classList.remove('show');
+            document.getElementById('custom-spot-preview').style.display = 'none';
+            // 缓存景点数据
+            if (!_allSpotsCache) {
+                fetch('http://localhost:8080/api/scenic-spot/list')
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    if (d.code === 200) _allSpotsCache = d.data;
+                })
+                .catch(function () {});
+            }
             document.getElementById('custom-modal').style.display = 'flex';
         }
 
@@ -2892,11 +3012,87 @@ body {
             document.getElementById('custom-modal').style.display = 'none';
         }
 
+        function switchCustomTab(tab) {
+            document.querySelectorAll('.modal-tab').forEach(function (t) {
+                t.classList.toggle('active', t.getAttribute('data-tab') === tab);
+            });
+            document.getElementById('custom-tab-custom').style.display = tab === 'custom' ? 'block' : 'none';
+            document.getElementById('custom-tab-spot').style.display = tab === 'spot' ? 'block' : 'none';
+        }
+
+        function searchCustomSpots(query) {
+            var list = document.getElementById('custom-spot-list');
+            if (!query || query.length < 1) {
+                list.innerHTML = '';
+                list.classList.remove('show');
+                return;
+            }
+            query = query.toLowerCase();
+            var spots = _allSpotsCache || [];
+            var matched = spots.filter(function (s) {
+                return s.name && s.name.toLowerCase().indexOf(query) >= 0;
+            }).slice(0, 20);
+
+            if (matched.length === 0) {
+                list.innerHTML = '<div style="padding:12px;color:#999;font-size:13px;">未找到匹配景点</div>';
+                list.classList.add('show');
+                return;
+            }
+            var html = '';
+            for (var i = 0; i < matched.length; i++) {
+                var s = matched[i];
+                var price = (s.price == 0) ? '免费' : '¥' + s.price;
+                html += '<div class="spot-search-item" onclick="selectCustomSpot(' + i + ')">' +
+                    '<span class="name">' + esc(s.name) + '</span>' +
+                    '<span class="meta">' + esc(s.city) + ' · ' + (s.level||'') + ' · ' + price + '</span>' +
+                    '</div>';
+            }
+            // 用 data 属性存储匹配结果
+            list.innerHTML = html;
+            list._matched = matched;
+            list.classList.add('show');
+        }
+
+        function selectCustomSpot(idx) {
+            var list = document.getElementById('custom-spot-list');
+            var matched = list._matched || [];
+            var spot = matched[idx];
+            if (!spot) return;
+            customSelectedSpot = spot;
+
+            // 显示预览
+            var price = (spot.price == 0) ? '免费' : '¥' + spot.price;
+            var dur = spot.visitDuration ? spot.visitDuration + ' 小时' : '—';
+            document.getElementById('custom-spot-preview-name').textContent = spot.name;
+            document.getElementById('custom-spot-preview-level').textContent = spot.level || '';
+            document.getElementById('custom-spot-preview-rating').textContent = spot.rating || '';
+            document.getElementById('custom-spot-preview-price').textContent = price;
+            document.getElementById('custom-spot-preview-duration').textContent = dur;
+            document.getElementById('custom-spot-preview').style.display = 'block';
+
+            // 隐藏搜索列表
+            list.classList.remove('show');
+        }
+
         function confirmAddCustom() {
-            var name = document.getElementById('custom-name').value.trim();
-            if (!name) { alert('请输入活动名称'); return; }
-            var start = document.getElementById('custom-start').value;
-            var duration = parseInt(document.getElementById('custom-duration').value);
+            var activeTab = document.querySelector('.modal-tab.active');
+            var isSpot = activeTab && activeTab.getAttribute('data-tab') === 'spot';
+
+            var name, start, duration, spotData;
+
+            if (isSpot) {
+                if (!customSelectedSpot) { alert('请先选择一个景点'); return; }
+                start = document.getElementById('custom-spot-start').value;
+                duration = Math.round((customSelectedSpot.visitDuration || 2) * 60);
+                name = customSelectedSpot.name;
+                spotData = customSelectedSpot;
+            } else {
+                name = document.getElementById('custom-name').value.trim();
+                if (!name) { alert('请输入活动名称'); return; }
+                start = document.getElementById('custom-start').value;
+                duration = parseInt(document.getElementById('custom-duration').value);
+                spotData = null;
+            }
 
             // 计算结束时间
             var parts = start.split(':');
@@ -2929,18 +3125,21 @@ body {
             }
             if (!day) { alert('找不到对应日期'); return; }
 
-            // 创建自定义活动 slot
+            // 创建 slot
             var slot = {
-                type: 'custom',
+                type: isSpot ? 'attraction' : 'custom',
                 name: name,
                 title: name,
                 startTime: start,
                 endTime: endStr,
                 duration: duration,
-                cost: 0
+                cost: isSpot && spotData ? (spotData.price || 0) : 0
             };
+            if (isSpot && spotData) {
+                slot.spot = spotData;
+            }
 
-            // 按时间插入（保持时间顺序）
+            // 按时间插入
             var insertIdx = day.slots.length;
             for (var si = 0; si < day.slots.length; si++) {
                 var existing = day.slots[si];
@@ -3235,30 +3434,60 @@ body {
     <div id="custom-modal" class="modal-overlay" style="display:none;" onclick="closeCustomModal(event)">
         <div class="modal-content" onclick="event.stopPropagation();">
             <div class="modal-header">
-                <h3>添加自定义项目</h3>
+                <h3>添加项目</h3>
                 <span class="modal-close" onclick="closeCustomModal()">&times;</span>
             </div>
+            <div class="modal-tabs">
+                <span class="modal-tab active" data-tab="custom" onclick="switchCustomTab('custom')">自定义活动</span>
+                <span class="modal-tab" data-tab="spot" onclick="switchCustomTab('spot')">景点</span>
+            </div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label>活动名称</label>
-                    <input type="text" id="custom-name" placeholder="如：自由活动、逛街购物..." maxlength="50">
-                </div>
-                <div class="form-row" style="gap:12px;">
-                    <div class="form-group" style="flex:1;">
-                        <label>开始时间</label>
-                        <select id="custom-start"></select>
+                <!-- 自定义活动 -->
+                <div id="custom-tab-custom" class="custom-tab-content">
+                    <div class="form-group">
+                        <label>活动名称</label>
+                        <input type="text" id="custom-name" placeholder="如：自由活动、逛街购物..." maxlength="50">
                     </div>
-                    <div class="form-group" style="flex:1;">
-                        <label>持续时间</label>
-                        <select id="custom-duration">
-                            <option value="30">30 分钟</option>
-                            <option value="60" selected>1 小时</option>
-                            <option value="90">1.5 小时</option>
-                            <option value="120">2 小时</option>
-                            <option value="150">2.5 小时</option>
-                            <option value="180">3 小时</option>
-                            <option value="240">4 小时</option>
-                        </select>
+                    <div class="form-row" style="gap:12px;">
+                        <div class="form-group" style="flex:1;">
+                            <label>开始时间</label>
+                            <select id="custom-start"></select>
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label>持续时间</label>
+                            <select id="custom-duration">
+                                <option value="30">30 分钟</option>
+                                <option value="60" selected>1 小时</option>
+                                <option value="90">1.5 小时</option>
+                                <option value="120">2 小时</option>
+                                <option value="150">2.5 小时</option>
+                                <option value="180">3 小时</option>
+                                <option value="240">4 小时</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <!-- 景点 -->
+                <div id="custom-tab-spot" class="custom-tab-content" style="display:none;">
+                    <div class="form-group">
+                        <label>搜索景点</label>
+                        <input type="text" id="custom-spot-search" placeholder="输入景点名称搜索..." oninput="searchCustomSpots(this.value)">
+                        <div id="custom-spot-list" class="spot-search-list"></div>
+                    </div>
+                    <div id="custom-spot-preview" class="spot-preview" style="display:none;">
+                        <div class="spot-preview-header">
+                            <span class="spot-preview-name" id="custom-spot-preview-name"></span>
+                            <span class="level-badge" id="custom-spot-preview-level"></span>
+                        </div>
+                        <div class="spot-preview-meta">
+                            <span>评分 <b id="custom-spot-preview-rating"></b></span>
+                            <span id="custom-spot-preview-price"></span>
+                            <span>游玩约 <b id="custom-spot-preview-duration"></b></span>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top:12px;">
+                        <label>开始时间</label>
+                        <select id="custom-spot-start"></select>
                     </div>
                 </div>
             </div>
