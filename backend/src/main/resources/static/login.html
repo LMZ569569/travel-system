@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-trae-theme="light"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>旅游规划系统 - 登录注册</title>
+    <style>/* ========== 旅游规划系统 共用样式（简约高级风） ========== */
+:root {
+    --ink: #0f172a;          /* 深墨蓝：导航、主按钮、标题 */
+    --accent: #2563eb;       /* 主色：克制的蓝 */
+    --accent-soft: #eef4ff;  /* 浅蓝底 */
+    --bg: #f6f7f9;           /* 页面背景 */
+    --card: #ffffff;         /* 卡片 */
+    --border: #e8eaee;       /* 细边框 */
+    --text: #1a1d24;         /* 主文字 */
+    --text-muted: #8a919c;   /* 次要文字 */
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- 顶部导航（白色极简） ---------- */
+.navbar {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.navbar .logo {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar .logo::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+}
+
+.navbar .logo span {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+}
+
+.navbar .nav-links {
+    display: flex;
+    align-items: center;
+}
+
+.navbar .nav-links a {
+    color: var(--text-muted);
+    text-decoration: none;
+    margin-left: 28px;
+    font-size: 14px;
+    padding: 6px 2px;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+}
+
+.navbar .nav-links #nav-user-area {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.navbar .nav-links a:hover {
+    color: var(--ink);
+}
+
+.navbar .nav-links a.active {
+    color: var(--ink);
+    font-weight: 600;
+    border-bottom-color: var(--accent);
+}
+
+.navbar .nav-user {
+    color: var(--ink);
+    font-size: 14px;
+    margin-left: 28px;
+    font-weight: 500;
+}
+
+/* ---------- 页面主体 ---------- */
+.container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+}
+
+.page-title {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--ink);
+    margin-bottom: 8px;
+}
+
+.page-subtitle {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 32px;
+}
+
+/* ---------- 卡片 ---------- */
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+/* ---------- 表单 ---------- */
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-end;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+
+.form-group input,
+.form-group select {
+    height: 42px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    background: var(--card);
+    transition: border-color 0.2s;
+    min-width: 160px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--accent);
+}
+
+/* ---------- 按钮 ---------- */
+.btn {
+    height: 42px;
+    padding: 0 28px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    background: var(--ink);
+    color: #fff;
+    letter-spacing: 0.5px;
+    transition: background 0.2s, opacity 0.2s;
+}
+
+.btn:hover {
+    background: #1e293b;
+}
+
+.btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.btn-block {
+    width: 100%;
+}
+
+/* ---------- 景点卡片网格 ---------- */
+.spot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.spot-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: box-shadow 0.25s, transform 0.25s;
+}
+
+.spot-card:hover {
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    transform: translateY(-2px);
+}
+
+.spot-card .spot-body {
+    padding: 20px;
+}
+
+.spot-card .spot-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.spot-card .spot-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.spot-card .level-badge {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.spot-card .spot-meta {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+
+.spot-card .spot-desc {
+    font-size: 13px;
+    color: #5b6470;
+    line-height: 1.7;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.spot-card .spot-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
+
+.spot-card .spot-price {
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.spot-card .spot-price.free {
+    color: var(--accent);
+}
+
+.spot-card .spot-rating {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.spot-card .spot-rating b {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+/* ---------- 行程结果 ---------- */
+.plan-summary {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+}
+
+.plan-summary .stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    text-align: center;
+    flex: 1;
+    min-width: 120px;
+}
+
+.plan-summary .stat .num {
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.plan-summary .stat .label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 6px;
+    letter-spacing: 0.5px;
+}
+
+.day-plan {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.day-plan .day-header {
+    padding: 14px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    background: #fafbfc;
+}
+
+.day-plan .day-title {
+    font-weight: 600;
+    color: var(--ink);
+    font-size: 15px;
+}
+
+.day-plan .day-meta {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.day-plan .day-spots {
+    padding: 20px 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+/* ---------- 登录注册 ---------- */
+.auth-wrap {
+    max-width: 400px;
+    margin: 72px auto;
+}
+
+.auth-tabs {
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.auth-tabs .tab {
+    flex: 1;
+    text-align: center;
+    padding: 14px 0;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-muted);
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.auth-tabs .tab.active {
+    color: var(--ink);
+    font-weight: 600;
+    border-bottom-color: var(--accent);
+}
+
+.auth-form .form-group {
+    margin-bottom: 18px;
+}
+
+.auth-form input {
+    width: 100%;
+}
+
+.auth-msg {
+    margin-top: 16px;
+    font-size: 13px;
+    text-align: center;
+    padding: 12px;
+    border-radius: 6px;
+}
+
+.auth-msg.success {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.auth-msg.error {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+/* ---------- 加载与空状态 ---------- */
+.loading {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 48px 0;
+    font-size: 14px;
+}
+
+.empty {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 72px 0;
+    font-size: 14px;
+}
+
+/* ---------- 提示条 ---------- */
+.hint {
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+</style>
+<style data-trae-pptx-captured-css="true">:root { --ink: #0f172a; --accent: #2563eb; --accent-soft: #eef4ff; --bg: #f6f7f9; --card: #ffffff; --border: #e8eaee; --text: #1a1d24; --text-muted: #8a919c; }
+* { margin: 0px; padding: 0px; box-sizing: border-box; }
+body { font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+.navbar { background: var(--card); border-bottom: 1px solid var(--border); padding: 0px 32px; height: 64px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0px; z-index: 100; }
+.navbar .logo { font-size: 18px; font-weight: 600; letter-spacing: 0.5px; color: var(--ink); display: flex; align-items: center; gap: 10px; }
+.navbar .logo::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.navbar .logo span { font-size: 12px; font-weight: 400; color: var(--text-muted); letter-spacing: 1px; }
+.navbar .nav-links { display: flex; align-items: center; }
+.navbar .nav-links a { color: var(--text-muted); text-decoration: none; margin-left: 28px; font-size: 14px; padding: 6px 2px; border-bottom: 2px solid transparent; transition: color 0.2s, border-color 0.2s; white-space: nowrap; }
+.navbar .nav-links #nav-user-area { display: inline-flex; align-items: center; white-space: nowrap; }
+.navbar .nav-links a:hover { color: var(--ink); }
+.navbar .nav-links a.active { color: var(--ink); font-weight: 600; border-bottom-color: var(--accent); }
+.navbar .nav-user { color: var(--ink); font-size: 14px; margin-left: 28px; font-weight: 500; }
+.container { max-width: 1080px; margin: 0px auto; padding: 48px 24px 80px; }
+.page-title { font-size: 28px; font-weight: 600; letter-spacing: 0.5px; color: var(--ink); margin-bottom: 8px; }
+.page-subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 32px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 24px; margin-bottom: 24px; }
+.form-row { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; }
+.form-group { display: flex; flex-direction: column; gap: 8px; }
+.form-group label { font-size: 12px; color: var(--text-muted); letter-spacing: 0.5px; }
+.form-group input, .form-group select { height: 42px; padding: 0px 14px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; color: var(--text); outline: none; background: var(--card); transition: border-color 0.2s; min-width: 160px; }
+.form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+.btn { height: 42px; padding: 0px 28px; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; background: var(--ink); color: rgb(255, 255, 255); letter-spacing: 0.5px; transition: background 0.2s, opacity 0.2s; }
+.btn:hover { background: rgb(30, 41, 59); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-block { width: 100%; }
+.spot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+.spot-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; transition: box-shadow 0.25s, transform 0.25s; }
+.spot-card:hover { box-shadow: rgba(15, 23, 42, 0.08) 0px 8px 24px; transform: translateY(-2px); }
+.spot-card .spot-body { padding: 20px; }
+.spot-card .spot-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.spot-card .spot-name { font-size: 16px; font-weight: 600; color: var(--ink); }
+.spot-card .level-badge { font-size: 11px; padding: 3px 10px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); font-weight: 600; letter-spacing: 0.5px; }
+.spot-card .spot-meta { font-size: 13px; color: var(--text-muted); margin-bottom: 10px; }
+.spot-card .spot-desc { font-size: 13px; color: rgb(91, 100, 112); line-height: 1.7; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.spot-card .spot-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.spot-card .spot-price { color: var(--ink); font-weight: 600; font-size: 15px; }
+.spot-card .spot-price.free { color: var(--accent); }
+.spot-card .spot-rating { color: var(--text-muted); font-size: 13px; font-weight: 500; }
+.spot-card .spot-rating b { color: var(--accent); font-weight: 600; }
+.plan-summary { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 28px; }
+.plan-summary .stat { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; text-align: center; flex: 1 1 0%; min-width: 120px; }
+.plan-summary .stat .num { font-size: 26px; font-weight: 600; color: var(--ink); }
+.plan-summary .stat .label { font-size: 12px; color: var(--text-muted); margin-top: 6px; letter-spacing: 0.5px; }
+.day-plan { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
+.day-plan .day-header { padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); background: rgb(250, 251, 252); }
+.day-plan .day-title { font-weight: 600; color: var(--ink); font-size: 15px; }
+.day-plan .day-meta { font-size: 13px; color: var(--text-muted); }
+.day-plan .day-spots { padding: 20px 24px; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.auth-wrap { max-width: 400px; margin: 72px auto; }
+.auth-tabs { display: flex; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+.auth-tabs .tab { flex: 1 1 0%; text-align: center; padding: 14px 0px; cursor: pointer; font-size: 14px; color: var(--text-muted); border-bottom: 2px solid transparent; transition: color 0.2s, border-color 0.2s; }
+.auth-tabs .tab.active { color: var(--ink); font-weight: 600; border-bottom-color: var(--accent); }
+.auth-form .form-group { margin-bottom: 18px; }
+.auth-form input { width: 100%; }
+.auth-msg { margin-top: 16px; font-size: 13px; text-align: center; padding: 12px; border-radius: 6px; }
+.auth-msg.success { background: var(--accent-soft); color: var(--accent); }
+.auth-msg.error { background: rgb(254, 242, 242); color: rgb(220, 38, 38); }
+.loading { text-align: center; color: var(--text-muted); padding: 48px 0px; font-size: 14px; }
+.empty { text-align: center; color: var(--text-muted); padding: 72px 0px; font-size: 14px; }
+.hint { background: var(--accent-soft); color: var(--accent); padding: 12px 16px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; }</style></head>
+<body>
+
+    <!-- 顶部导航 -->
+    <nav class="navbar">
+        <div class="logo">旅游规划系统<span>Travel Planner</span></div>
+        <div class="nav-links">
+            <a href="index.html">首页</a>
+            <a href="plan-wizard.html">行程规划</a>
+            <span id="nav-user-area" style="display:none;">
+                <span id="nav-user-name" class="nav-user"></span>
+                <a href="#" id="nav-logout">退出</a>
+            </span>
+            <a href="login.html" id="nav-login" class="active" style="display: inline;">登录</a>
+        </div>
+    </nav>
+
+    <div class="auth-wrap">
+        <h1 class="page-title" style="text-align:center;">欢迎使用</h1>
+        <p class="page-subtitle" style="text-align:center;">登录或注册，开始你的旅行规划</p>
+
+        <!-- 登录 / 注册 切换 -->
+        <div class="auth-tabs">
+            <div class="tab active" id="tab-login">登录</div>
+            <div class="tab" id="tab-register">注册</div>
+        </div>
+
+        <div class="card auth-form">
+            <!-- 登录表单 -->
+            <div id="login-form">
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" id="login-username" placeholder="请输入用户名">
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="login-password" placeholder="请输入密码">
+                </div>
+                <button class="btn btn-block" id="btn-login">登录</button>
+            </div>
+
+            <!-- 注册表单 -->
+            <div id="register-form" style="display:none;">
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" id="reg-username" placeholder="请输入用户名">
+                </div>
+                <div class="form-group">
+                    <label>昵称</label>
+                    <input type="text" id="reg-nickname" placeholder="请输入昵称（可选）">
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="reg-password" placeholder="请输入密码">
+                </div>
+                <button class="btn btn-block" id="btn-register">注册</button>
+            </div>
+
+            <!-- 提示信息 -->
+            <div class="auth-msg" id="auth-msg" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // ===== 纯 JavaScript 版本，不依赖任何框架 =====
+
+        // 当前登录用户
+        var currentUser = null;
+        try {
+            currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+        } catch (e) {
+            currentUser = null;
+        }
+
+        // 导航栏显示登录状态
+        function renderNav() {
+            var userArea = document.getElementById('nav-user-area');
+            var loginLink = document.getElementById('nav-login');
+            if (currentUser) {
+                userArea.style.display = 'inline-flex';
+                loginLink.style.display = 'none';
+                document.getElementById('nav-user-name').textContent =
+                    '你好，' + (currentUser.nickname || currentUser.username);
+            } else {
+                userArea.style.display = 'none';
+                loginLink.style.display = 'inline';
+            }
+        }
+
+        // 退出登录
+        document.getElementById('nav-logout').addEventListener('click', function (e) {
+            e.preventDefault();
+            localStorage.removeItem('user');
+            currentUser = null;
+            renderNav();
+            switchMode('login');
+        });
+
+        // 切换登录/注册
+        function switchMode(mode) {
+            var loginForm = document.getElementById('login-form');
+            var registerForm = document.getElementById('register-form');
+            var tabLogin = document.getElementById('tab-login');
+            var tabRegister = document.getElementById('tab-register');
+            if (mode === 'login') {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+                tabLogin.classList.add('active');
+                tabRegister.classList.remove('active');
+            } else {
+                registerForm.style.display = 'block';
+                loginForm.style.display = 'none';
+                tabRegister.classList.add('active');
+                tabLogin.classList.remove('active');
+            }
+        }
+
+        document.getElementById('tab-login').addEventListener('click', function () {
+            switchMode('login');
+        });
+        document.getElementById('tab-register').addEventListener('click', function () {
+            switchMode('register');
+        });
+
+        // 显示提示信息
+        function showMsg(type, text) {
+            var msg = document.getElementById('auth-msg');
+            msg.style.display = 'block';
+            msg.className = 'auth-msg ' + type;
+            msg.textContent = text;
+        }
+
+        // 登录
+        document.getElementById('btn-login').addEventListener('click', function () {
+            var username = document.getElementById('login-username').value.trim();
+            var password = document.getElementById('login-password').value.trim();
+            if (!username || !password) {
+                showMsg('error', '请填写用户名和密码');
+                return;
+            }
+            var btn = this;
+            btn.disabled = true;
+            btn.textContent = '登录中...';
+            fetch('http://localhost:8080/api/user/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: username, password: password })
+            })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data.code === 200) {
+                    var user = data.data.user;
+                    showMsg('success', '登录成功！欢迎 ' + user.nickname);
+                    localStorage.setItem('token', data.data.token);
+                    localStorage.setItem('user', JSON.stringify(user));
+                    currentUser = user;
+                    setTimeout(function () {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                } else {
+                    showMsg('error', data.message || '登录失败');
+                }
+            })
+            .catch(function (e) {
+                console.error('登录失败', e);
+                showMsg('error', '请求失败，请确认后端已启动');
+            })
+            .finally(function () {
+                btn.disabled = false;
+                btn.textContent = '登录';
+            });
+        });
+
+        // 注册
+        document.getElementById('btn-register').addEventListener('click', function () {
+            var username = document.getElementById('reg-username').value.trim();
+            var nickname = document.getElementById('reg-nickname').value.trim();
+            var password = document.getElementById('reg-password').value.trim();
+            if (!username || !password) {
+                showMsg('error', '请填写用户名和密码');
+                return;
+            }
+            var btn = this;
+            btn.disabled = true;
+            btn.textContent = '注册中...';
+            fetch('http://localhost:8080/api/user/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: username, nickname: nickname, password: password })
+            })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data.code === 200) {
+                    showMsg('success', '注册成功！请切换到登录');
+                    document.getElementById('login-username').value = username;
+                    switchMode('login');
+                } else {
+                    showMsg('error', data.message || '注册失败');
+                }
+            })
+            .catch(function (e) {
+                console.error('注册失败', e);
+                showMsg('error', '请求失败，请确认后端已启动');
+            })
+            .finally(function () {
+                btn.disabled = false;
+                btn.textContent = '注册';
+            });
+        });
+
+        // 页面初始化
+        renderNav();
+    </script>
+
+
+</body></html>
