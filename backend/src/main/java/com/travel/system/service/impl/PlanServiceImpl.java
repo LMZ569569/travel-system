@@ -286,8 +286,8 @@ public class PlanServiceImpl implements PlanService {
         List<PlanResult.DayPlan> dayPlans = new ArrayList<>();
         int totalAvailableMinutes = days * DAILY_HOURS * 60;
 
-        if (hotel != null) {
-            cpr.setCost(cpr.getCost().add(hotel.getPrice()));
+        if (hotel != null && hotel.getPrice() != null) {
+            cpr.setCost(cpr.getCost().add(hotel.getPrice().multiply(BigDecimal.valueOf(days))));
         }
 
         List<ScenicSpot> sortedSpots = new ArrayList<>(spots);
@@ -299,14 +299,15 @@ public class PlanServiceImpl implements PlanService {
         LocalDate currentDate = startDate;
 
         for (ScenicSpot spot : sortedSpots) {
-            int visitDuration = (int) Math.ceil(spot.getVisitDuration().doubleValue() * 60);
+            BigDecimal rawDuration = spot.getVisitDuration();
+            int visitDuration = rawDuration != null ? (int) Math.ceil(rawDuration.doubleValue() * 60) : 120;
             int totalSlotDuration = visitDuration + (hotel != null ? travelTimeService.estimateMinutes(
                     hotel.getLatitude(), hotel.getLongitude(),
                     spot.getLatitude(), spot.getLongitude()) : 30);
 
             if (currentMinutesUsed + totalSlotDuration > totalAvailableMinutes) {
                 if (currentDay < days - 1) {
-                    dayPlans.add(finishDay(currentDate, currentSlots, (hotel != null ? hotel.getPrice() : BigDecimal.ZERO)));
+                    dayPlans.add(finishDay(currentDate, currentSlots, (hotel != null && hotel.getPrice() != null ? hotel.getPrice() : BigDecimal.ZERO)));
                     currentDay++;
                     currentMinutesUsed = 0;
                     currentSlots.clear();
