@@ -1432,6 +1432,7 @@ body { font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", -apple
         document.getElementById('nav-logout').addEventListener('click', function (e) {
             e.preventDefault();
             localStorage.removeItem('user');
+            localStorage.removeItem('token');
             currentUser = null;
             renderNav();
         });

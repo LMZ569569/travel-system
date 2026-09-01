@@ -2,8 +2,8 @@ package com.travel.system.controller;
 
 import com.travel.system.common.Result;
 import com.travel.system.dto.LoginRequest;
+import com.travel.system.dto.LoginResponse;
 import com.travel.system.dto.RegisterRequest;
-import com.travel.system.entity.User;
 import com.travel.system.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,21 +20,21 @@ public class UserController {
 
     /** 注册 */
     @PostMapping("/register")
-    public Result<User> register(@RequestBody RegisterRequest request) {
-        User user = userService.register(request.getUsername(), request.getPassword(), request.getNickname());
-        if (user == null) {
+    public Result<LoginResponse> register(@RequestBody RegisterRequest request) {
+        LoginResponse resp = userService.register(request.getUsername(), request.getPassword(), request.getNickname());
+        if (resp == null) {
             return Result.error("用户名已存在");
         }
-        return Result.success(user);
+        return Result.success(resp);
     }
 
     /** 登录 */
     @PostMapping("/login")
-    public Result<User> login(@RequestBody LoginRequest request) {
-        User user = userService.login(request.getUsername(), request.getPassword());
-        if (user == null) {
+    public Result<LoginResponse> login(@RequestBody LoginRequest request) {
+        LoginResponse resp = userService.login(request.getUsername(), request.getPassword());
+        if (resp == null) {
             return Result.error("用户名或密码错误");
         }
-        return Result.success(user);
+        return Result.success(resp);
     }
 }
