@@ -15,7 +15,7 @@ public class JwtUtil {
 
     private static final SecretKey KEY = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
 
-    public static String generateToken(Integer userId, String username) {
+    public static String generateToken(Long userId, String username) {
         Date now = new Date();
         return Jwts.builder()
                 .subject(userId.toString())
@@ -34,7 +34,7 @@ public class JwtUtil {
                 .getPayload();
     }
 
-    public static Integer getUserId(String token) {
-        return Integer.parseInt(parseToken(token).getSubject());
+    public static Long getUserId(String token) {
+        return Long.parseLong(parseToken(token).getSubject());
     }
 }
