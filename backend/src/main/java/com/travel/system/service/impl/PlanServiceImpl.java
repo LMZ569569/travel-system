@@ -311,7 +311,7 @@ public class PlanServiceImpl implements PlanService {
         }
 
         List<PlanResult.DayPlan> dayPlans = new ArrayList<>();
-        int totalAvailableMinutes = days * DAILY_HOURS * 60;
+        int dailyMinutes = DAILY_HOURS * 60;
 
         if (hotel != null && hotel.getPrice() != null) {
             cpr.setCost(cpr.getCost().add(hotel.getPrice().multiply(BigDecimal.valueOf(days))));
@@ -332,15 +332,16 @@ public class PlanServiceImpl implements PlanService {
                     hotel.getLatitude(), hotel.getLongitude(),
                     spot.getLatitude(), spot.getLongitude()) : 30);
 
-            if (currentMinutesUsed + totalSlotDuration > totalAvailableMinutes) {
+            if (currentMinutesUsed + totalSlotDuration > dailyMinutes) {
                 if (currentDay < days - 1) {
+                    // 先把当前已填的内容记为一整天
                     dayPlans.add(finishDay(currentDate, currentSlots, (hotel != null && hotel.getPrice() != null ? hotel.getPrice() : BigDecimal.ZERO)));
                     currentDay++;
                     currentMinutesUsed = 0;
                     currentSlots.clear();
                     currentDate = currentDate.plusDays(1);
-                }
-                if (currentMinutesUsed + totalSlotDuration > totalAvailableMinutes) {
+                } else {
+                    // 没有更多天数了，跳过剩余景点
                     break;
                 }
             }
