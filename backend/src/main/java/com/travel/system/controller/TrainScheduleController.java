@@ -3,9 +3,10 @@ package com.travel.system.controller;
 import com.travel.system.common.Result;
 import com.travel.system.entity.TrainSchedule;
 import com.travel.system.mapper.TrainScheduleMapper;
+import com.travel.system.dto.TransferPlan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -55,6 +56,33 @@ public class TrainScheduleController {
     @GetMapping("/to-cities")
     public Result<List<String>> toCities() {
         return Result.success(trainScheduleMapper.findToCities());
+    }
+
+    @GetMapping("/transfer")
+    public Result<List<TransferPlan>> transfer(@RequestParam String from, @RequestParam String to) {
+        // 1. 找所有中转城市
+        List<String> reachable = trainScheduleMapper.findToCitiesByFrom(from);
+        List<String> canReach = trainScheduleMapper.findFromCitiesByTo(to);
+        Set<String> midCities = new HashSet<>(reachable);
+        midCities.retainAll(canReach);
+        midCities.remove(from);
+        midCities.remove(to);
+
+        // 2. 找每个中转城市的最优方案
+        List<TransferPlan> plans = new ArrayList<>();
+        for (String mid : midCities) {
+            List<TrainSchedule> firstLegs = trainScheduleMapper.findByRoute(from, mid);
+            List<TrainSchedule> secondLegs = trainScheduleMapper.findByRoute(mid, to);
+            if (!firstLegs.isEmpty() && !secondLegs.isEmpty()) {
+                TrainSchedule leg1 = firstLegs.get(0);
+                TrainSchedule leg2 = secondLegs.get(0);
+                plans.add(new TransferPlan("train", mid, leg1, leg2));
+            }
+        }
+
+        // 按总价排序
+        plans.sort(Comparator.comparingDouble(TransferPlan::getTotalPrice));
+        return Result.success(plans);
     }
 
     @PostMapping

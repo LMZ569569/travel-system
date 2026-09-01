@@ -571,6 +571,16 @@ body {
     color: #7c3aed;
 }
 
+.badge-transfer {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.text-muted {
+    color: #8a919c;
+    font-size: 12px;
+}
+
 .slot-attraction {
     background: #ecfdf5;
     color: #059669;
@@ -1288,6 +1298,7 @@ body {
 
         // ===== 车次/航班查询弹窗 =====
         var transportQueryData = []; // 保存当前查询结果，供选择按钮使用
+        var lastTransportQuery = {}; // 保存上一次查询的 from/to/type
         // 分表后返回结构不同：火车为 trainNo/trainType，航班为 flightNo/airline，统一转成展示结构
         function normalizeTrain(t) {
             return { type: 'train', scheduleNo: t.trainNo, sub: t.trainType || '', fromCity: t.fromCity, toCity: t.toCity, departTime: t.departTime, arriveTime: t.arriveTime, price: t.price };
@@ -1296,11 +1307,20 @@ body {
             return { type: 'flight', scheduleNo: f.flightNo, sub: f.airline || '', fromCity: f.fromCity, toCity: f.toCity, departTime: f.departTime, arriveTime: f.arriveTime, price: f.price };
         }
 
-        function renderTransportResults(data) {
+        function renderTransportResults(data, showTransfer) {
             transportQueryData = data; // 保存供选择按钮使用
             var box = document.getElementById('transport-query-list');
             if (!data || data.length === 0) {
-                box.innerHTML = '<div class="empty" style="padding:24px 0;">没有找到符合条件的班次</div>';
+                var html = '<div class="empty" style="padding:24px 0;">没有找到符合条件的班次</div>';
+                // 如果有出发和到达城市，显示中转方案按钮
+                if (showTransfer && lastTransportQuery.from && lastTransportQuery.to) {
+                    html += '<div style="text-align:center;padding:10px 0 20px;">' +
+                        '<hr style="border:none;border-top:1px solid #eee;margin:8px 0 16px;">' +
+                        '<p style="color:#666;font-size:13px;margin-bottom:12px;">没有直达交通，试试中转方案？</p>' +
+                        '<button class="btn" onclick="loadTransferPlans()" style="min-width:160px;">🔄 查看中转方案</button>' +
+                        '</div>';
+                }
+                box.innerHTML = html;
                 return;
             }
             var html = '<table class="table"><thead><tr>' +
@@ -1321,8 +1341,106 @@ body {
                     '</tr>';
             }
             html += '</tbody></table>';
+            // 如果当前查询有明确 from/to，显示中转方案入口
+            if (showTransfer && lastTransportQuery.from && lastTransportQuery.to) {
+                html += '<div style="text-align:center;padding:8px 0 4px;">' +
+                    '<button class="btn btn-sm btn-ghost" onclick="loadTransferPlans()">没有直达车次？查看中转方案</button>' +
+                    '</div>';
+            }
             box.innerHTML = html;
         }
+
+        // 加载中转方案
+        window.loadTransferPlans = function () {
+            var from = lastTransportQuery.from;
+            var to = lastTransportQuery.to;
+            if (!from || !to) return;
+            var box = document.getElementById('transport-query-list');
+            box.innerHTML = '<div style="text-align:center;padding:24px 0;color:#999;">正在查询中转方案...</div>';
+
+            // 根据选择的类型查询
+            var type = lastTransportQuery.type || '';
+            if (type === 'train') {
+                api('/api/train/transfer?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to)).then(function (res) {
+                    renderTransferResults(res.code === 200 ? res.data : []);
+                });
+            } else if (type === 'flight') {
+                api('/api/flight/transfer?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to)).then(function (res) {
+                    renderTransferResults(res.code === 200 ? res.data : []);
+                });
+            } else {
+                // 都查，合并结果
+                Promise.all([
+                    api('/api/train/transfer?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to)),
+                    api('/api/flight/transfer?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to))
+                ]).then(function (arr) {
+                    var list = [];
+                    if (arr[0].code === 200) list = list.concat(arr[0].data);
+                    if (arr[1].code === 200) list = list.concat(arr[1].data);
+                    list.sort(function (a, b) { return a.totalPrice - b.totalPrice; });
+                    renderTransferResults(list);
+                });
+            }
+        };
+
+        function renderTransferResults(plans) {
+            var box = document.getElementById('transport-query-list');
+            if (!plans || plans.length === 0) {
+                box.innerHTML = '<div class="empty" style="padding:24px 0;">未找到中转方案</div>' +
+                    '<div style="text-align:center;padding:8px 0;"><button class="btn btn-sm btn-ghost" onclick="browseTransport()">返回</button></div>';
+                return;
+            }
+            var html = '<div style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">' +
+                '<span style="font-weight:600;font-size:14px;">🔄 中转方案（共 ' + plans.length + ' 种）</span>' +
+                '<button class="btn btn-sm btn-ghost" onclick="browseTransport()">返回直达查询</button></div>';
+            html += '<table class="table"><thead><tr>' +
+                '<th>中转城市</th><th>第一段</th><th>第二段</th><th>总价</th><th>总耗时</th><th>操作</th>' +
+                '</tr></thead><tbody>';
+            for (var i = 0; i < plans.length; i++) {
+                var p = plans[i];
+                var typeName = p.type === 'flight' ? '航班' : '火车';
+                html += '<tr>' +
+                    '<td><span class="badge badge-transfer">' + esc(p.transferCity) + '</span></td>' +
+                    '<td style="font-size:12px;">' + esc(p.firstLeg) + '<br>' +
+                    '<span class="text-muted">' + esc(p.firstFrom) + '→' + esc(p.firstTo) + ' ' + p.firstDepart + '-' + p.firstArrive + '</span><br>' +
+                    '<span class="text-muted">¥' + p.firstPrice + '</span></td>' +
+                    '<td style="font-size:12px;">' + esc(p.secondLeg) + '<br>' +
+                    '<span class="text-muted">' + esc(p.secondFrom) + '→' + esc(p.secondTo) + ' ' + p.secondDepart + '-' + p.secondArrive + '</span><br>' +
+                    '<span class="text-muted">¥' + p.secondPrice + '</span></td>' +
+                    '<td><strong>¥' + p.totalPrice + '</strong></td>' +
+                    '<td>' + Math.floor(p.totalMinutes / 60) + 'h' + (p.totalMinutes % 60) + 'min</td>' +
+                    '<td><button class="btn btn-sm" onclick="chooseTransferPlan(' + i + ')">选择此方案</button></td>' +
+                    '</tr>';
+            }
+            html += '</tbody></table>';
+            html += '<div style="padding:8px 0;color:#999;font-size:12px;text-align:center;">提示：中转方案为两段车次组合，需分别购票</div>';
+            // 保存
+            window._transferPlans = plans;
+            box.innerHTML = html;
+        }
+
+        // 选择中转方案 - 填充两段到交通段
+        window.chooseTransferPlan = function (index) {
+            var p = window._transferPlans[index];
+            if (!p) return;
+            var rows = document.querySelectorAll('#transport-segments .ts-row');
+            if (tsTargetIndex >= 0 && tsTargetIndex < rows.length) {
+                var row = rows[tsTargetIndex];
+                var info = row.querySelector('.ts-info');
+                var mode = row.querySelector('.ts-mode');
+                if (mode) mode.value = p.type;
+                if (info) info.textContent = p.firstLeg + ' ' + p.firstFrom + '→' + p.firstTo + ' ' + p.firstDepart + '-' + p.firstArrive + ' → ' + p.secondLeg + ' ' + p.secondFrom + '→' + p.secondTo + ' ' + p.secondDepart + '-' + p.secondArrive;
+                row.dataset.scheduleNo = p.firstLeg + ',' + p.secondLeg;
+                row.dataset.departTime = p.firstDepart;
+                row.dataset.arriveTime = p.secondArrive;
+                row.dataset.price = p.totalPrice || '0';
+                row.dataset.from = p.firstFrom;
+                row.dataset.to = p.secondTo;
+                row.dataset.transfer = '1';
+            }
+            document.getElementById('transport-modal').style.display = 'none';
+            tsTargetIndex = -1;
+        };
 
         window.chooseTransport = function (index) {
             var t = transportQueryData[index];
@@ -1378,14 +1496,17 @@ body {
             var from = document.getElementById('tq-from').value;
             var to = document.getElementById('tq-to').value;
             var type = document.getElementById('tq-type').value;
+            // 保存查询参数供中转方案使用
+            lastTransportQuery = { from: from, to: to, type: type };
+            var hasRoute = from && to;
             var qs = '?from=' + encodeURIComponent(from || '') + '&to=' + encodeURIComponent(to || '');
             if (type === 'train') {
                 api('/api/train/search' + qs).then(function (res) {
-                    renderTransportResults(res.code === 200 ? res.data.map(normalizeTrain) : []);
+                    renderTransportResults(res.code === 200 ? res.data.map(normalizeTrain) : [], hasRoute);
                 });
             } else if (type === 'flight') {
                 api('/api/flight/search' + qs).then(function (res) {
-                    renderTransportResults(res.code === 200 ? res.data.map(normalizeFlight) : []);
+                    renderTransportResults(res.code === 200 ? res.data.map(normalizeFlight) : [], hasRoute);
                 });
             } else {
                 Promise.all([
@@ -1395,7 +1516,7 @@ body {
                     var list = [];
                     (arr[0].code === 200 ? arr[0].data : []).forEach(function (t) { list.push(normalizeTrain(t)); });
                     (arr[1].code === 200 ? arr[1].data : []).forEach(function (f) { list.push(normalizeFlight(f)); });
-                    renderTransportResults(list);
+                    renderTransportResults(list, hasRoute);
                 });
             }
         }

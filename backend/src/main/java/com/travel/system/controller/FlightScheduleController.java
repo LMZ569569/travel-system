@@ -3,9 +3,10 @@ package com.travel.system.controller;
 import com.travel.system.common.Result;
 import com.travel.system.entity.FlightSchedule;
 import com.travel.system.mapper.FlightScheduleMapper;
+import com.travel.system.dto.TransferPlan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -55,6 +56,30 @@ public class FlightScheduleController {
     @GetMapping("/to-cities")
     public Result<List<String>> toCities() {
         return Result.success(flightScheduleMapper.findToCities());
+    }
+
+    @GetMapping("/transfer")
+    public Result<List<TransferPlan>> transfer(@RequestParam String from, @RequestParam String to) {
+        List<String> reachable = flightScheduleMapper.findToCitiesByFrom(from);
+        List<String> canReach = flightScheduleMapper.findFromCitiesByTo(to);
+        Set<String> midCities = new HashSet<>(reachable);
+        midCities.retainAll(canReach);
+        midCities.remove(from);
+        midCities.remove(to);
+
+        List<TransferPlan> plans = new ArrayList<>();
+        for (String mid : midCities) {
+            List<FlightSchedule> firstLegs = flightScheduleMapper.findByRoute(from, mid);
+            List<FlightSchedule> secondLegs = flightScheduleMapper.findByRoute(mid, to);
+            if (!firstLegs.isEmpty() && !secondLegs.isEmpty()) {
+                FlightSchedule leg1 = firstLegs.get(0);
+                FlightSchedule leg2 = secondLegs.get(0);
+                plans.add(new TransferPlan("flight", mid, leg1, leg2));
+            }
+        }
+
+        plans.sort(Comparator.comparingDouble(TransferPlan::getTotalPrice));
+        return Result.success(plans);
     }
 
     @PostMapping

@@ -33,4 +33,10 @@ public interface FlightScheduleMapper {
 
     @Delete("DELETE FROM flight_schedule WHERE id = #{id}")
     int delete(@Param("id") Long id);
+
+    @Select("SELECT DISTINCT to_city FROM flight_schedule WHERE from_city = #{fromCity} ORDER BY to_city")
+    List<String> findToCitiesByFrom(@Param("fromCity") String fromCity);
+
+    @Select("SELECT DISTINCT from_city FROM flight_schedule WHERE to_city = #{toCity} ORDER BY from_city")
+    List<String> findFromCitiesByTo(@Param("toCity") String toCity);
 }
