@@ -801,6 +801,122 @@ body {
     color: var(--text-muted);
 }
 
+/* ---------- 自定义项目 ---------- */
+.slot-custom {
+    background: #8b5cf6 !important;
+    border-color: #8b5cf6 !important;
+}
+
+.day-footer {
+    padding: 12px 16px;
+    border-top: 1px dashed var(--border);
+    text-align: center;
+}
+
+.btn-add-custom {
+    background: none;
+    border: 1px dashed var(--text-muted);
+    color: var(--text-muted);
+    padding: 6px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all .2s;
+}
+
+.btn-add-custom:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(59,130,246,.06);
+}
+
+/* 弹窗 */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: var(--card);
+    border-radius: 12px;
+    width: 420px;
+    max-width: 90vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.modal-close {
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-muted);
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: var(--text);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-body .form-group {
+    margin-bottom: 14px;
+}
+
+.modal-body .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: var(--text);
+}
+
+.modal-body .form-group input,
+.modal-body .form-group select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+    background: var(--card);
+    color: var(--text);
+    box-sizing: border-box;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+}
+
+.modal-footer .btn {
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+}
+
 /* ---------- 城市段行程 ---------- */
 .city-plan {
     background: var(--card);
@@ -2586,12 +2702,13 @@ body {
             }).then(function (data) {
                 document.getElementById('plan-loading').style.display = 'none';
                 if (data.code === 200) {
-                    renderResult(data.data);
-                    document.getElementById('result-section').style.display = 'block';
-                } else {
-                    alert(data.message || '规划失败');
-                    document.getElementById('step-confirm').classList.add('active');
-                }
+		                    window._planResult = data.data;
+		                    renderResult(data.data);
+		                    document.getElementById('result-section').style.display = 'block';
+		                } else {
+		                    alert(data.message || '规划失败');
+		                    document.getElementById('step-confirm').classList.add('active');
+		                }
             }).catch(function (e) {
                 console.error('规划失败', e);
                 document.getElementById('plan-loading').style.display = 'none';
@@ -2614,7 +2731,8 @@ body {
             'hotel': { name: '酒店', cls: 'slot-hotel' },
             'attraction': { name: '景点', cls: 'slot-attraction' },
             'meal': { name: '用餐', cls: 'slot-meal' },
-            'free': { name: '自由', cls: 'slot-free' }
+            'free': { name: '自由', cls: 'slot-free' },
+            'custom': { name: '自定义', cls: 'slot-custom' }
         };
 
         function renderResult(result) {
@@ -2740,8 +2858,107 @@ body {
                     '</div>';
             }
 
-            html += '</div></div>';
+            html += '</div>' +
+                    '<div class="day-footer">' +
+                        '<button class="btn-add-custom" onclick="showAddCustomModal(' + dayIndex + ')">+ 添加自定义项目</button>' +
+                    '</div>' +
+                '</div>';
             return html;
+        }
+
+        // ===== 自定义项目弹窗 =====
+        var customDayIndex = -1;
+
+        function showAddCustomModal(dayIndex) {
+            customDayIndex = dayIndex;
+            // 填充时间下拉框 08:00 ~ 21:00
+            var select = document.getElementById('custom-start');
+            select.innerHTML = '';
+            for (var h = 8; h <= 21; h++) {
+                for (var m = 0; m < 60; m += 30) {
+                    var t = (h < 10 ? '0' : '') + h + ':' + (m === 0 ? '00' : '30');
+                    var opt = document.createElement('option');
+                    opt.value = t;
+                    opt.textContent = t;
+                    select.appendChild(opt);
+                }
+            }
+            document.getElementById('custom-name').value = '';
+            document.getElementById('custom-modal').style.display = 'flex';
+        }
+
+        function closeCustomModal(e) {
+            if (e && e.target !== e.currentTarget) return;
+            document.getElementById('custom-modal').style.display = 'none';
+        }
+
+        function confirmAddCustom() {
+            var name = document.getElementById('custom-name').value.trim();
+            if (!name) { alert('请输入活动名称'); return; }
+            var start = document.getElementById('custom-start').value;
+            var duration = parseInt(document.getElementById('custom-duration').value);
+
+            // 计算结束时间
+            var parts = start.split(':');
+            var startMins = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+            var endMins = startMins + duration;
+            var endH = Math.floor(endMins / 60) % 24;
+            var endM = endMins % 60;
+            var endStr = (endH < 10 ? '0' : '') + endH + ':' + (endM < 10 ? '0' : '') + endM;
+
+            // 获取当前计划结果
+            var result = window._planResult;
+            if (!result) return;
+
+            // 找到对应的 day 对象
+            var day;
+            var dayIdx = 0;
+            for (var ci = 0; ci < result.cityPlans.length; ci++) {
+                var cp = result.cityPlans[ci];
+                for (var di = 0; di < cp.dayPlans.length; di++) {
+                    if (dayIdx === customDayIndex) {
+                        day = cp.dayPlans[di];
+                        break;
+                    }
+                    dayIdx++;
+                }
+                if (day) break;
+            }
+            if (!day && result.dayPlans && customDayIndex < result.dayPlans.length) {
+                day = result.dayPlans[customDayIndex];
+            }
+            if (!day) { alert('找不到对应日期'); return; }
+
+            // 创建自定义活动 slot
+            var slot = {
+                type: 'custom',
+                name: name,
+                title: name,
+                startTime: start,
+                endTime: endStr,
+                duration: duration,
+                cost: 0
+            };
+
+            // 按时间插入（保持时间顺序）
+            var insertIdx = day.slots.length;
+            for (var si = 0; si < day.slots.length; si++) {
+                var existing = day.slots[si];
+                if (existing.startTime && existing.startTime > start) {
+                    insertIdx = si;
+                    break;
+                }
+            }
+            day.slots.splice(insertIdx, 0, slot);
+
+            // 重新渲染当天
+            var dayPlanEls = document.querySelectorAll('.day-plan');
+            if (dayPlanEls.length > customDayIndex) {
+                var dayContainer = dayPlanEls[customDayIndex];
+                dayContainer.outerHTML = renderDay(day, customDayIndex);
+            }
+
+            closeCustomModal();
         }
 
         // ===== 结果页面操作 =====
@@ -2968,12 +3185,13 @@ body {
                 document.getElementById('btn-fuzzy-plan').disabled = false;
                 document.getElementById('btn-fuzzy-plan').textContent = '生成行程方案';
                 if (data.code === 200) {
-                    renderResult(data.data);
-                    document.getElementById('result-section').style.display = 'block';
-                    document.getElementById('fuzzy-plan-section').style.display = 'none';
-                } else {
-                    alert('生成失败：' + (data.msg || '未知错误'));
-                }
+		                    window._planResult = data.data;
+		                    renderResult(data.data);
+		                    document.getElementById('result-section').style.display = 'block';
+		                    document.getElementById('fuzzy-plan-section').style.display = 'none';
+		                } else {
+		                    alert('生成失败：' + (data.msg || '未知错误'));
+		                }
             }).catch(function () {
                 document.getElementById('btn-fuzzy-plan').disabled = false;
                 document.getElementById('btn-fuzzy-plan').textContent = '生成行程方案';
@@ -3012,5 +3230,43 @@ body {
 
         init();
     </script>
+
+<!-- 自定义项目弹窗 -->
+    <div id="custom-modal" class="modal-overlay" style="display:none;" onclick="closeCustomModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation();">
+            <div class="modal-header">
+                <h3>添加自定义项目</h3>
+                <span class="modal-close" onclick="closeCustomModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>活动名称</label>
+                    <input type="text" id="custom-name" placeholder="如：自由活动、逛街购物..." maxlength="50">
+                </div>
+                <div class="form-row" style="gap:12px;">
+                    <div class="form-group" style="flex:1;">
+                        <label>开始时间</label>
+                        <select id="custom-start"></select>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label>持续时间</label>
+                        <select id="custom-duration">
+                            <option value="30">30 分钟</option>
+                            <option value="60" selected>1 小时</option>
+                            <option value="90">1.5 小时</option>
+                            <option value="120">2 小时</option>
+                            <option value="150">2.5 小时</option>
+                            <option value="180">3 小时</option>
+                            <option value="240">4 小时</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeCustomModal()">取消</button>
+                <button class="btn btn-primary" onclick="confirmAddCustom()">确定添加</button>
+            </div>
+        </div>
+    </div>
 
 </body></html>
