@@ -1161,6 +1161,23 @@ body {
                     </div>
                 </div>
 
+                <div class="form-row" style="margin-bottom:20px;">
+                    <div class="form-group" style="flex:1;">
+                        <label>交通方式</label>
+                        <div style="display:flex;gap:16px;padding-top:6px;">
+                            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:14px;color:var(--text);">
+                                <input type="radio" name="fuzzy-transport" value="self-drive" checked> 自驾
+                            </label>
+                            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:14px;color:var(--text);">
+                                <input type="radio" name="fuzzy-transport" value="train"> 火车
+                            </label>
+                            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:14px;color:var(--text);">
+                                <input type="radio" name="fuzzy-transport" value="flight"> 飞机
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
                 <div style="margin-bottom:16px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                         <label style="font-size:12px;color:var(--text-muted);letter-spacing:.5px;">想去的地方</label>
@@ -2916,12 +2933,17 @@ body {
             document.getElementById('btn-fuzzy-plan').disabled = true;
             document.getElementById('btn-fuzzy-plan').textContent = '正在生成...';
 
+            // 读取交通方式
+            var transportMode = document.querySelector('input[name="fuzzy-transport"]:checked');
+            var transportValue = transportMode ? transportMode.value : 'self-drive';
+
             // 构建请求参数（匹配后端 PlanRequest DTO）
             var planData = {
                 originCity: origin,
                 cities: destCities,
                 startDate: start,
-                endDate: end
+                endDate: end,
+                transportMode: transportValue
             };
 
             // 调用后端API生成计划
