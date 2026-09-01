@@ -433,7 +433,7 @@ public class PlanServiceImpl implements PlanService {
         PlanResult.DayPlan dp = new PlanResult.DayPlan();
         dp.setDate(date.format(DATE_FMT));
         dp.setCost(dayCost);
-        dp.setSlots(slots);
+        dp.setSlots(new ArrayList<>(slots));
         return dp;
     }
 
