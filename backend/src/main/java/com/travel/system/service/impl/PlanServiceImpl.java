@@ -32,6 +32,7 @@ public class PlanServiceImpl implements PlanService {
 
     private static final int DAILY_HOURS = 8;
     private static final int DAY_START_MIN = 8 * 60;
+    private static final int DAY_END_MIN = 21 * 60;
     private static final int LUNCH_MIN = 12 * 60;
     private static final int DINNER_MIN = 18 * 60;
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -378,11 +379,22 @@ public class PlanServiceImpl implements PlanService {
         // 使用副本遍历，避免在遍历时修改原始列表导致 ConcurrentModificationException
         List<PlanResult.TimeSlot> working = new ArrayList<>(slots);
         for (PlanResult.TimeSlot slot : working) {
+            if (currentMin >= DAY_END_MIN) {
+                slot.setStartTime(null);
+                continue;
+            }
             int h = currentMin / 60;
             int m = currentMin % 60;
             slot.setStartTime(String.format("%02d:%02d", h, m));
             currentMin += slot.getDuration();
-            if (currentMin >= LUNCH_MIN && currentMin < LUNCH_MIN + 60) {
+            if (currentMin > DAY_END_MIN) {
+                // 超出当日可安排时间，截断剩余景点
+                slot.setStartTime(null);
+                continue;
+            }
+            // 如果当前时间跨过午餐时间(12:00-13:00)，插入午餐
+            int prevMin = currentMin - slot.getDuration();
+            if (prevMin < LUNCH_MIN + 60 && currentMin > LUNCH_MIN) {
                 PlanResult.TimeSlot lunch = new PlanResult.TimeSlot();
                 lunch.setType("meal");
                 lunch.setName("午餐");
@@ -395,7 +407,8 @@ public class PlanServiceImpl implements PlanService {
                 }
                 currentMin += 60;
             }
-            if (currentMin >= DINNER_MIN && currentMin < DINNER_MIN + 60) {
+            // 如果当前时间跨过晚餐时间(18:00-19:00)，插入晚餐
+            if (prevMin < DINNER_MIN + 60 && currentMin > DINNER_MIN) {
                 PlanResult.TimeSlot dinner = new PlanResult.TimeSlot();
                 dinner.setType("meal");
                 dinner.setName("晚餐");
@@ -409,6 +422,8 @@ public class PlanServiceImpl implements PlanService {
                 currentMin += 60;
             }
         }
+        // 移除超出时间的景点
+        slots.removeIf(s -> s.getStartTime() == null);
         BigDecimal dayCost = hotelCost;
         for (PlanResult.TimeSlot s : slots) {
             if (s.getCost() != null) {
