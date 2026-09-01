@@ -1004,6 +1004,75 @@ body {
     margin-top: 24px;
     justify-content: center;
 }
+
+/* ---------- 模式选择 ---------- */
+.mode-selector {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.mode-selector .mode-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 8px;
+}
+
+.mode-selector .mode-subtitle {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 32px;
+}
+
+.mode-options {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.mode-card {
+    width: 280px;
+    padding: 36px 28px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    background: var(--card);
+    text-align: center;
+}
+
+.mode-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 4px 20px rgba(37, 99, 235, 0.1);
+    transform: translateY(-2px);
+}
+
+.mode-card .mode-icon {
+    font-size: 40px;
+    margin-bottom: 16px;
+}
+
+.mode-card .mode-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 8px;
+}
+
+.mode-card .mode-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+#fuzzy-plan-section {
+    display: none;
+}
+
+#fuzzy-plan-section.active {
+    display: block;
+}
 </style>
 </head>
 <body>
@@ -1024,10 +1093,73 @@ body {
 
     <div class="container">
         <h1 class="page-title">智能行程向导</h1>
-        <p class="page-subtitle">分步选择出发城市、目的地、交通和住宿，系统自动生成完整行程</p>
+        <p class="page-subtitle" id="page-subtitle">智能规划您的完美旅程</p>
+
+        <!-- ===== 模式选择 ===== -->
+        <div id="mode-selector" class="card mode-selector">
+            <div class="mode-title">选择规划模式</div>
+            <div class="mode-subtitle">请选择您需要的行程规划方式</div>
+            <div class="mode-options">
+                <div class="mode-card" onclick="selectMode('fuzzy')">
+                    <div class="mode-icon">&#9881;</div>
+                    <div class="mode-name">模糊规划</div>
+                    <div class="mode-desc">只需选择出发城市和目的地，<br>系统自动为您规划完整行程</div>
+                </div>
+                <div class="mode-card" onclick="selectMode('precise')">
+                    <div class="mode-icon">&#9998;</div>
+                    <div class="mode-name">精确规划</div>
+                    <div class="mode-desc">分步选择交通、住宿等细节，<br>完全掌控您的行程安排</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 模糊规划 ===== -->
+        <div id="fuzzy-plan-section">
+            <div class="card">
+                <div class="step-title">模糊行程规划</div>
+                <div class="step-subtitle">填写基本信息，系统将自动为您生成最优行程</div>
+
+                <div class="form-row" style="margin-bottom:20px;">
+                    <div class="form-group">
+                        <label>出发省份</label>
+                        <select id="fuzzy-origin-province"><option value="">请选择省份</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>出发城市</label>
+                        <select id="fuzzy-origin-city"><option value="">请选择城市</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>开始日期</label>
+                        <input type="date" id="fuzzy-start-date">
+                    </div>
+                    <div class="form-group">
+                        <label>结束日期</label>
+                        <input type="date" id="fuzzy-end-date">
+                    </div>
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <label style="font-size:12px;color:var(--text-muted);letter-spacing:.5px;">想去的地方</label>
+                        <button class="btn btn-sm" id="fuzzy-add-city" type="button">+ 添加城市</button>
+                    </div>
+                    <div id="fuzzy-city-rows"></div>
+                </div>
+
+                <div class="checkbox-group" style="margin-bottom:16px;">
+                    <input type="checkbox" id="fuzzy-return-checkbox" checked>
+                    <label for="fuzzy-return-checkbox" style="cursor:pointer;font-size:14px;color:var(--text);">行程结束后返回出发城市</label>
+                </div>
+
+                <button class="btn btn-block" id="btn-fuzzy-plan" disabled>生成行程方案</button>
+            </div>
+            <div style="text-align:center;margin-top:12px;">
+                <button class="btn btn-ghost" onclick="showModeSelector()">返回选择模式</button>
+            </div>
+        </div>
 
         <!-- 步骤指示器 -->
-        <div class="steps-indicator" id="steps-indicator"></div>
+        <div class="steps-indicator" id="steps-indicator" style="display:none;"></div>
 
         <!-- ===== Step 1: 基础信息 ===== -->
         <div class="step-content active" id="step-1" data-step="1">
@@ -2355,26 +2487,30 @@ body {
                     }
 
                     for (var di = 0; di < c.dayPlans.length; di++) {
-                        html += renderDay(c.dayPlans[di]);
+                        html += renderDay(c.dayPlans[di], di);
                     }
                     html += '</div>';
                 }
             } else if (result.dayPlans) {
                 for (var di2 = 0; di2 < result.dayPlans.length; di2++) {
-                    html += renderDay(result.dayPlans[di2]);
+                    html += renderDay(result.dayPlans[di2], di2);
                 }
             }
 
             container.innerHTML = html;
         }
 
-        function renderDay(day) {
+        function renderDay(day, dayIndex) {
             var dateStr = day.date ? ' · ' + day.date : '';
+            var dayNum = day.day || (dayIndex !== undefined ? dayIndex + 1 : '');
+            var hours = day.dayHours || '8';
+            var cost = day.dayCost || day.cost || 0;
+            var rating = day.dayRating || '4.5';
             var html =
                 '<div class="day-plan">' +
                     '<div class="day-header">' +
-                        '<span class="day-title">第 ' + day.day + ' 天' + dateStr + '</span>' +
-                        '<span class="day-meta">游玩约 ' + day.dayHours + ' 小时 · 花费 ¥' + day.dayCost + ' · 评分 ' + day.dayRating + '</span>' +
+                        '<span class="day-title">第 ' + dayNum + ' 天' + dateStr + '</span>' +
+                        '<span class="day-meta">游玩约 ' + hours + ' 小时 · 花费 ¥' + cost + ' · 评分 ' + rating + '</span>' +
                     '</div>' +
                     '<div class="timeline">';
 
@@ -2382,23 +2518,30 @@ body {
                 var ts = day.slots[i];
                 var meta = SLOT_TYPE[ts.type] || { name: '其他', cls: 'slot-free' };
                 var note = ts.note ? '<div class="slot-note">' + esc(ts.note) + '</div>' : '';
+                var title = ts.title || ts.name || '';
+                var endTime = ts.endTime || '';
+                if (!endTime && ts.duration && ts.startTime) {
+                    var parts = ts.startTime.split(':');
+                    var mins = parseInt(parts[0]) * 60 + parseInt(parts[1]) + ts.duration;
+                    endTime = Math.floor(mins / 60) % 24 + ':' + (mins % 60 < 10 ? '0' : '') + (mins % 60);
+                }
                 var spotInfo = '';
                 if (ts.spot) {
                     var s = ts.spot;
                     var price = (s.price == 0) ? '免费' : '¥' + s.price;
                     spotInfo = '<div class="slot-spot">' +
-                        '<span class="level-badge">' + esc(s.level) + '</span>' +
-                        '<span>评分 ' + s.rating + '</span>' +
+                        '<span class="level-badge">' + esc(s.level || '') + '</span>' +
+                        '<span>评分 ' + (s.rating || '') + '</span>' +
                         '<span>' + price + '</span>' +
                         (s.openTime ? '<span>' + esc(s.openTime) + '</span>' : '') +
                     '</div>';
                 }
                 html +=
                     '<div class="timeline-item">' +
-                        '<div class="timeline-time">' + esc(ts.startTime) + '<br><span>' + esc(ts.endTime) + '</span></div>' +
+                        '<div class="timeline-time">' + esc(ts.startTime || '') + '<br><span>' + esc(endTime) + '</span></div>' +
                         '<div class="timeline-dot ' + meta.cls + '"></div>' +
                         '<div class="timeline-body">' +
-                            '<div class="slot-title"><span class="badge ' + meta.cls + '">' + meta.name + '</span> ' + esc(ts.title) + '</div>' +
+                            '<div class="slot-title"><span class="badge ' + meta.cls + '">' + meta.name + '</span> ' + esc(title) + '</div>' +
                             spotInfo + note +
                         '</div>' +
                     '</div>';
@@ -2412,8 +2555,14 @@ body {
         document.getElementById('btn-back-to-wizard').addEventListener('click', function () {
             document.getElementById('result-section').style.display = 'none';
             document.getElementById('plan-result').style.display = 'none';
-            currentStep = stepKeys.indexOf('confirm');
-            showCurrentStep();
+            if (currentMode === 'fuzzy') {
+                // 模糊模式：返回模糊规划表单
+                document.getElementById('fuzzy-plan-section').style.display = 'block';
+            } else {
+                // 精确模式：返回确认步骤
+                currentStep = stepKeys.indexOf('confirm');
+                showCurrentStep();
+            }
         });
 
         document.getElementById('btn-new-plan').addEventListener('click', function () {
@@ -2438,6 +2587,182 @@ body {
             }
         };
 
+        // ===== 模式选择 =====
+        var currentMode = null; // 'fuzzy' or 'precise'
+
+        function showModeSelector() {
+            currentMode = null;
+            document.getElementById('mode-selector').style.display = 'block';
+            document.getElementById('fuzzy-plan-section').classList.remove('active');
+            document.getElementById('fuzzy-plan-section').style.display = 'none';
+            document.getElementById('steps-indicator').style.display = 'none';
+            document.getElementById('page-subtitle').textContent = '智能规划您的完美旅程';
+            // 隐藏所有步骤
+            var allSteps = document.querySelectorAll('.step-content');
+            for (var i = 0; i < allSteps.length; i++) {
+                allSteps[i].classList.remove('active');
+            }
+            document.getElementById('result-section').style.display = 'none';
+        }
+
+        function selectMode(mode) {
+            currentMode = mode;
+            document.getElementById('mode-selector').style.display = 'none';
+
+            if (mode === 'fuzzy') {
+                document.getElementById('fuzzy-plan-section').classList.add('active');
+                document.getElementById('fuzzy-plan-section').style.display = 'block';
+                document.getElementById('page-subtitle').textContent = '选择目的地和日期，系统自动规划';
+                // 初始化模糊规划表单
+                initFuzzyForm();
+            } else if (mode === 'precise') {
+                document.getElementById('fuzzy-plan-section').style.display = 'none';
+                document.getElementById('steps-indicator').style.display = 'flex';
+                document.getElementById('page-subtitle').textContent = '分步选择出发城市、目的地、交通和住宿，系统自动生成完整行程';
+                // 显示精确规划向导
+                showCurrentStep();
+                renderSteps();
+            }
+        }
+
+        // ===== 模糊规划 =====
+        function initFuzzyForm() {
+            var fuzzyProv = document.getElementById('fuzzy-origin-province');
+            var fuzzyCity = document.getElementById('fuzzy-origin-city');
+            populateProvince(fuzzyProv);
+
+            fuzzyProv.onchange = function () {
+                populateCity(fuzzyProv.value, fuzzyCity);
+                updateFuzzyBtn();
+            };
+            fuzzyCity.onchange = updateFuzzyBtn;
+            document.getElementById('fuzzy-start-date').onchange = updateFuzzyBtn;
+            document.getElementById('fuzzy-end-date').onchange = updateFuzzyBtn;
+            document.getElementById('fuzzy-return-checkbox').onchange = updateFuzzyBtn;
+
+            document.getElementById('fuzzy-add-city').onclick = function () {
+                addFuzzyCityRow();
+                updateFuzzyBtn();
+            };
+
+            // 默认给一行
+            var rows = document.getElementById('fuzzy-city-rows');
+            if (rows.children.length === 0) {
+                addFuzzyCityRow();
+            }
+
+            // 生成按钮
+            document.getElementById('btn-fuzzy-plan').onclick = function () {
+                generateFuzzyPlan();
+            };
+
+            // 监听城市行变化
+            document.getElementById('fuzzy-city-rows').addEventListener('change', updateFuzzyBtn);
+        }
+
+        function addFuzzyCityRow() {
+            var wrap = document.getElementById('fuzzy-city-rows');
+            var row = document.createElement('div');
+            row.className = 'city-row';
+            row.innerHTML =
+                '<select class="city-province" style="width:100px;"></select>' +
+                '<select class="city-city" style="width:100px;"></select>' +
+                '<input type="number" class="city-days" min="1" max="30" placeholder="停留天数(可空)" style="width:90px;">' +
+                '<button type="button" class="btn btn-sm btn-danger btn-remove-fuzzy-city">删除</button>';
+            wrap.appendChild(row);
+
+            var provSel = row.querySelector('.city-province');
+            var citySel = row.querySelector('.city-city');
+            populateProvince(provSel);
+
+            provSel.addEventListener('change', function () {
+                populateCity(provSel.value, citySel);
+            });
+            provSel.addEventListener('change', updateFuzzyBtn);
+            citySel.addEventListener('change', updateFuzzyBtn);
+
+            row.querySelector('.btn-remove-fuzzy-city').addEventListener('click', function () {
+                row.remove();
+                updateFuzzyBtn();
+            });
+        }
+
+        function updateFuzzyBtn() {
+            var origin = document.getElementById('fuzzy-origin-city').value;
+            var start = document.getElementById('fuzzy-start-date').value;
+            var end = document.getElementById('fuzzy-end-date').value;
+            var rows = document.querySelectorAll('#fuzzy-city-rows .city-row');
+            var hasCity = false;
+            for (var i = 0; i < rows.length; i++) {
+                if (rows[i].querySelector('.city-city').value) {
+                    hasCity = true;
+                    break;
+                }
+            }
+            document.getElementById('btn-fuzzy-plan').disabled = !(origin && start && end && hasCity);
+        }
+
+        function generateFuzzyPlan() {
+            var origin = document.getElementById('fuzzy-origin-city').value;
+            var originProv = document.getElementById('fuzzy-origin-province').value;
+            var start = document.getElementById('fuzzy-start-date').value;
+            var end = document.getElementById('fuzzy-end-date').value;
+
+            // 收集目的地城市（包含省份）
+            var destCities = [];
+            var rows = document.querySelectorAll('#fuzzy-city-rows .city-row');
+            for (var i = 0; i < rows.length; i++) {
+                var prov = rows[i].querySelector('.city-province').value;
+                var city = rows[i].querySelector('.city-city').value;
+                var days = rows[i].querySelector('.city-days').value;
+                if (city) {
+                    destCities.push({
+                        province: prov,
+                        city: city,
+                        days: days ? parseInt(days, 10) : null
+                    });
+                }
+            }
+
+            if (destCities.length === 0) {
+                alert('请至少添加一个目的地城市');
+                return;
+            }
+
+            // 显示加载
+            document.getElementById('btn-fuzzy-plan').disabled = true;
+            document.getElementById('btn-fuzzy-plan').textContent = '正在生成...';
+
+            // 构建请求参数（匹配后端 PlanRequest DTO）
+            var planData = {
+                originCity: origin,
+                cities: destCities,
+                startDate: start,
+                endDate: end
+            };
+
+            // 调用后端API生成计划
+            api('/api/plan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(planData)
+            }).then(function (data) {
+                document.getElementById('btn-fuzzy-plan').disabled = false;
+                document.getElementById('btn-fuzzy-plan').textContent = '生成行程方案';
+                if (data.code === 200) {
+                    renderResult(data.data);
+                    document.getElementById('result-section').style.display = 'block';
+                    document.getElementById('fuzzy-plan-section').style.display = 'none';
+                } else {
+                    alert('生成失败：' + (data.msg || '未知错误'));
+                }
+            }).catch(function () {
+                document.getElementById('btn-fuzzy-plan').disabled = false;
+                document.getElementById('btn-fuzzy-plan').textContent = '生成行程方案';
+                alert('请求失败，请确认后端已启动');
+            });
+        }
+
         // ===== 初始化 =====
         function init() {
             renderNav();
@@ -2459,6 +2784,8 @@ body {
                     buildSteps();
                     initTransportSteps();
                     initHotelSteps();
+                    // 显示模式选择（隐藏向导）
+                    showModeSelector();
                 }
             }).catch(function () {
                 alert('加载城市数据失败，请确认后端已启动');
